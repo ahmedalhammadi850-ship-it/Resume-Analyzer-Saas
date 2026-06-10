@@ -57,17 +57,28 @@ export async function runGeneralAnalysis(file: File): Promise<AnalysisResults> {
 }
 
 // ── Save & Fetch Analyses ────────────────────────────────────────────────────
+function extractScore(results: AnalysisResults): number {
+  const candidates = [
+    results.ats_score,
+    results.match_score,
+    results.score,
+    (results as Record<string, unknown>)["Score"],
+    (results as Record<string, unknown>)["overall_score"],
+  ];
+  for (const c of candidates) {
+    const n = Number(c);
+    if (!isNaN(n) && n > 0) return n;
+  }
+  return 0;
+}
+
 export async function saveAnalysis(
   userId: string,
   analysisType: AnalysisType,
   fileName: string,
   results: AnalysisResults
 ): Promise<string> {
-  const score =
-    results.ats_score ??
-    results.match_score ??
-    results.score ??
-    0;
+  const score = extractScore(results);
   const ref = await addDoc(collection(db, "analyses"), {
     userId,
     analysisType,
