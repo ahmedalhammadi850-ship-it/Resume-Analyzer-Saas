@@ -7,17 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { uploadResumeFile, runJdAnalysis, runGeneralAnalysis, saveAnalysis, decrementScans } from "@/lib/firestore";
 import { FileUp, Target, Zap, AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
 
 export default function Analyze() {
   const { userProfile, refreshProfile } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+  const { t } = useTranslation();
+
   const [activeTab, setActiveTab] = useState("jd_match");
   const [file, setFile] = useState<File | null>(null);
   const [jobTitle, setJobTitle] = useState("");
@@ -32,8 +34,8 @@ export default function Analyze() {
     if (selected) {
       if (selected.size > 10 * 1024 * 1024) {
         toast({
-          title: "File too large",
-          description: "Max file size is 10MB",
+          title: t("analyze.fileTooLarge"),
+          description: t("analyze.uploadDesc"),
           variant: "destructive"
         });
         return;
@@ -47,48 +49,45 @@ export default function Analyze() {
     if (!userProfile?.uid) return;
     if (outOfScans) {
       toast({
-        title: "Out of Scans",
-        description: "Please upgrade to Pro to continue scanning.",
+        title: t("analyze.outOfScans"),
+        description: t("analyze.upgradeMsg"),
         variant: "destructive"
       });
       setLocation("/pricing");
       return;
     }
     if (!file) {
-      toast({ title: "File required", description: "Please upload a resume", variant: "destructive" });
+      toast({ title: t("analyze.fileRequired"), description: t("analyze.fileRequired"), variant: "destructive" });
       return;
     }
 
     setIsProcessing(true);
     try {
-      // Run analysis
-      const results = activeTab === "jd_match" 
+      const results = activeTab === "jd_match"
         ? await runJdAnalysis(file, jobTitle, jobDescription)
         : await runGeneralAnalysis(file);
 
-      // Save to db
       const analysisId = await saveAnalysis(
-        userProfile.uid, 
-        activeTab as "jd_match" | "general_review", 
-        file.name, 
+        userProfile.uid,
+        activeTab as "jd_match" | "general_review",
+        file.name,
         results
       );
 
-      // Decrement scans for free users
       if (isFreeUser) {
         await decrementScans(userProfile.uid);
         await refreshProfile();
       }
 
       toast({
-        title: "Analysis Complete",
-        description: "Your results are ready.",
+        title: t("common.analysisComplete"),
+        description: t("common.analysisCompleteMsg"),
       });
       setLocation(`/analysis/${analysisId}`);
     } catch (error: any) {
       toast({
-        title: "Analysis Failed",
-        description: error.message || "An error occurred during analysis",
+        title: t("common.analysisFailed"),
+        description: error.message || t("common.analysisFailedMsg"),
         variant: "destructive"
       });
     } finally {
@@ -100,18 +99,18 @@ export default function Analyze() {
     <Layout>
       <div className="max-w-3xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">New Analysis</h1>
-          <p className="text-muted-foreground mt-1">Upload your resume and get actionable insights instantly.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("analyze.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("analyze.subtitle")}</p>
         </div>
 
         {outOfScans && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Scan limit reached</AlertTitle>
+            <AlertTitle>{t("analyze.scanLimitReached")}</AlertTitle>
             <AlertDescription className="flex items-center justify-between mt-2">
-              <span>You have used all your free scans. Upgrade to Pro for unlimited analyses.</span>
+              <span>{t("analyze.scanLimitMsg")}</span>
               <Button variant="outline" size="sm" onClick={() => setLocation("/pricing")}>
-                View Plans
+                {t("analyze.viewPlans")}
               </Button>
             </AlertDescription>
           </Alert>
@@ -123,9 +122,9 @@ export default function Analyze() {
             <CardContent className="flex flex-col items-center justify-center py-24 space-y-6 relative z-10">
               <Loader2 className="h-16 w-16 text-primary animate-spin" />
               <div className="text-center space-y-2">
-                <h3 className="text-xl font-bold">Analyzing your resume...</h3>
+                <h3 className="text-xl font-bold">{t("analyze.analyzing")}</h3>
                 <p className="text-muted-foreground max-w-md">
-                  Our AI is currently reviewing your document, extracting skills, checking formatting, and scoring it against industry standards. This usually takes 10-30 seconds.
+                  {t("analyze.analyzingDesc")}
                 </p>
               </div>
             </CardContent>
@@ -137,20 +136,20 @@ export default function Analyze() {
                 <TabsList className="w-full grid w-full grid-cols-2 bg-muted/50 mb-4">
                   <TabsTrigger value="jd_match" className="gap-2">
                     <Target className="h-4 w-4" />
-                    Target Job Match
+                    {t("analyze.targetJobMatch")}
                   </TabsTrigger>
                   <TabsTrigger value="general_review" className="gap-2">
                     <Zap className="h-4 w-4" />
-                    General Review
+                    {t("analyze.generalReview")}
                   </TabsTrigger>
                 </TabsList>
               </CardHeader>
-              
+
               <form onSubmit={handleAnalyze}>
                 <CardContent className="space-y-6 pt-6">
-                  {/* Shared File Upload */}
+                  {/* File Upload */}
                   <div className="space-y-2">
-                    <Label htmlFor="resume">Resume Document</Label>
+                    <Label htmlFor="resume">{t("analyze.resumeDocument")}</Label>
                     <div className="mt-2 flex justify-center rounded-lg border border-dashed border-border px-6 py-10 bg-muted/10 hover:bg-muted/30 transition-colors">
                       <div className="text-center">
                         <FileUp className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
@@ -159,13 +158,20 @@ export default function Analyze() {
                             htmlFor="file-upload"
                             className="relative cursor-pointer rounded-md bg-background font-semibold text-primary focus-within:outline-none hover:text-primary/80 px-2 py-1 border shadow-sm"
                           >
-                            <span>Upload a file</span>
-                            <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".pdf,.docx" onChange={handleFileChange} />
+                            <span>{t("analyze.uploadFile")}</span>
+                            <input
+                              id="file-upload"
+                              name="file-upload"
+                              type="file"
+                              className="sr-only"
+                              accept=".pdf,.docx"
+                              onChange={handleFileChange}
+                            />
                           </label>
-                          <p className="pl-2 flex items-center">or drag and drop</p>
+                          <p className="pl-2 flex items-center">{t("analyze.dragDrop")}</p>
                         </div>
                         <p className="text-xs leading-5 text-muted-foreground mt-2">
-                          PDF or DOCX up to 10MB
+                          {t("analyze.uploadDesc")}
                         </p>
                         {file && (
                           <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
@@ -179,20 +185,20 @@ export default function Analyze() {
 
                   <TabsContent value="jd_match" className="space-y-4 m-0">
                     <div className="space-y-2">
-                      <Label htmlFor="jobTitle">Job Title</Label>
-                      <Input 
-                        id="jobTitle" 
-                        placeholder="e.g. Senior Frontend Engineer" 
+                      <Label htmlFor="jobTitle">{t("analyze.jobTitle")}</Label>
+                      <Input
+                        id="jobTitle"
+                        placeholder={t("analyze.jobTitlePlaceholder")}
                         value={jobTitle}
                         onChange={(e) => setJobTitle(e.target.value)}
                         required={activeTab === "jd_match"}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="jobDescription">Job Description</Label>
-                      <Textarea 
-                        id="jobDescription" 
-                        placeholder="Paste the full job description here..." 
+                      <Label htmlFor="jobDescription">{t("analyze.jobDescription")}</Label>
+                      <Textarea
+                        id="jobDescription"
+                        placeholder={t("analyze.jobDescPlaceholder")}
                         className="min-h-[200px]"
                         value={jobDescription}
                         onChange={(e) => setJobDescription(e.target.value)}
@@ -204,24 +210,26 @@ export default function Analyze() {
                   <TabsContent value="general_review" className="m-0">
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>General Review Mode</AlertTitle>
+                      <AlertTitle>{t("analyze.generalReviewMode")}</AlertTitle>
                       <AlertDescription>
-                        This mode will analyze your resume for general best practices, formatting, impact, and clarity without targeting a specific role.
+                        {t("analyze.generalReviewModeDesc")}
                       </AlertDescription>
                     </Alert>
                   </TabsContent>
                 </CardContent>
-                
+
                 <CardFooter className="border-t bg-muted/20 py-4 flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     {isFreeUser ? (
-                      <span><strong>{userProfile?.remainingScans}</strong> free scans remaining</span>
+                      <span>
+                        <strong>{userProfile?.remainingScans}</strong> {t("analyze.freeScansRemaining")}
+                      </span>
                     ) : (
-                      <span>Unlimited Pro scans</span>
+                      <span>{t("analyze.unlimitedScans")}</span>
                     )}
                   </div>
                   <Button type="submit" disabled={isProcessing || outOfScans || !file} size="lg">
-                    {activeTab === "jd_match" ? "Analyze Match" : "Review Resume"}
+                    {activeTab === "jd_match" ? t("analyze.analyzeBtn") : t("analyze.reviewBtn")}
                   </Button>
                 </CardFooter>
               </form>
