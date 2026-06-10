@@ -48,9 +48,21 @@ export default function Register() {
       });
       setLocation("/dashboard");
     } catch (error: any) {
+      let description = "An error occurred during registration. Please try again.";
+      if (error.code === "auth/email-already-in-use") {
+        description = "This email is already registered. Try signing in instead.";
+      } else if (error.code === "auth/invalid-email") {
+        description = "The email address is not valid. Please check and try again.";
+      } else if (error.code === "auth/weak-password") {
+        description = "Password is too weak. Please choose a stronger password.";
+      } else if (error.code === "auth/network-request-failed") {
+        description = "Network error. Please check your connection and try again.";
+      } else if (error.code === "auth/operation-not-allowed") {
+        description = "Email/password sign-up is not enabled. Please contact support.";
+      }
       toast({
         title: "Registration Failed",
-        description: error.message || "An error occurred during registration",
+        description,
         variant: "destructive",
       });
     } finally {
