@@ -126,6 +126,16 @@ const ar = {
       emailRequired: "البريد الإلكتروني مطلوب",
       passwordRequired: "كلمة المرور مطلوبة",
       passwordMin: "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+      forgotPassword: "نسيت كلمة المرور؟",
+      invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      tooManyRequests: "محاولات كثيرة. يرجى المحاولة لاحقاً.",
+      networkError: "خطأ في الشبكة. تحقق من اتصالك.",
+      loginFailed: "فشل تسجيل الدخول",
+      registerSuccess: "مرحباً! حسابك جاهز.",
+      emailInUse: "هذا البريد الإلكتروني مسجّل مسبقاً. حاول تسجيل الدخول.",
+      invalidEmail: "البريد الإلكتروني غير صالح.",
+      notAllowed: "التسجيل بالبريد الإلكتروني غير مفعّل. تواصل مع الدعم.",
+      registerFailed: "فشل إنشاء الحساب",
     },
 
     // Dashboard
@@ -399,6 +409,12 @@ const ar = {
       analysisFailedMsg: "حدث خطأ أثناء التحليل",
       jdMatch: "مطابقة الوظيفة",
       general: "مراجعة شاملة",
+      resumesScanned: "سيرة ذاتية تم فحصها",
+      acrossAllScans: "عبر جميع عمليات الفحص",
+      onFreePlan: "في الخطة المجانية",
+      proPlanActive: "الخطة الاحترافية مفعّلة",
+      recentAnalysesDesc: "أحدث السير الذاتية التي تم فحصها",
+      quickActionsDesc: "أدوات شائعة لتعزيز بحثك الوظيفي",
     },
 
     // Not found

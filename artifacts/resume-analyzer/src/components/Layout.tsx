@@ -23,10 +23,11 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { userProfile, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
+  const isRtl = i18n.language === "ar";
 
   const handleLogout = async () => {
     await logout();
@@ -120,7 +121,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72">
+            <SheetContent side={isRtl ? "right" : "left"} className="p-0 w-72">
               <NavContent />
             </SheetContent>
           </Sheet>

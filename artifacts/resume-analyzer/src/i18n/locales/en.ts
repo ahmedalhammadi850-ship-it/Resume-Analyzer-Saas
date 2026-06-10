@@ -126,6 +126,16 @@ const en = {
       emailRequired: "Email is required",
       passwordRequired: "Password is required",
       passwordMin: "Password must be at least 6 characters",
+      forgotPassword: "Forgot password?",
+      invalidCredentials: "Invalid email or password.",
+      tooManyRequests: "Too many attempts. Please try again later.",
+      networkError: "Network error. Check your connection.",
+      loginFailed: "Login Failed",
+      registerSuccess: "Welcome! Your account is ready.",
+      emailInUse: "This email is already registered. Try signing in instead.",
+      invalidEmail: "The email address is not valid.",
+      notAllowed: "Email/password sign-up is not enabled. Contact support.",
+      registerFailed: "Registration Failed",
     },
 
     // Dashboard
@@ -399,6 +409,12 @@ const en = {
       analysisFailedMsg: "An error occurred during analysis",
       jdMatch: "JD Match",
       general: "General",
+      resumesScanned: "resumes scanned",
+      acrossAllScans: "across all scans",
+      onFreePlan: "on free plan",
+      proPlanActive: "pro plan active",
+      recentAnalysesDesc: "Your most recently scanned resumes",
+      quickActionsDesc: "Common tools to boost your job hunt",
     },
 
     // Not found

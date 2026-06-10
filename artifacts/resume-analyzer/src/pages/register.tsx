@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -13,58 +14,43 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { register } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
-        variant: "destructive",
-      });
+      toast({ title: t("auth.passwordMismatch"), variant: "destructive" });
       return;
     }
-
     if (password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
-      });
+      toast({ title: t("auth.passwordMin"), variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     try {
       await register(email, password, name);
-      toast({
-        title: "Account created!",
-        description: "Welcome to AI Resume Analyzer.",
-      });
+      toast({ title: t("common.analysisComplete"), description: t("auth.registerSuccess") || "Welcome!" });
       setLocation("/dashboard");
     } catch (error: any) {
-      let description = "An error occurred during registration. Please try again.";
+      let description = t("common.error");
       if (error.code === "auth/email-already-in-use") {
-        description = "This email is already registered. Try signing in instead.";
+        description = t("auth.emailInUse") || "This email is already registered. Try signing in instead.";
       } else if (error.code === "auth/invalid-email") {
-        description = "The email address is not valid. Please check and try again.";
+        description = t("auth.invalidEmail") || "The email address is not valid.";
       } else if (error.code === "auth/weak-password") {
-        description = "Password is too weak. Please choose a stronger password.";
+        description = t("auth.passwordMin");
       } else if (error.code === "auth/network-request-failed") {
-        description = "Network error. Please check your connection and try again.";
+        description = t("auth.networkError") || "Network error. Check your connection.";
       } else if (error.code === "auth/operation-not-allowed") {
-        description = "Email/password sign-up is not enabled. Please contact support.";
+        description = t("auth.notAllowed") || "Email/password sign-up is not enabled.";
       }
-      toast({
-        title: "Registration Failed",
-        description,
-        variant: "destructive",
-      });
+      toast({ title: t("auth.registerFailed") || "Registration Failed", description, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -72,70 +58,72 @@ export default function Register() {
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-muted/30 p-4">
-      <Link href="/" className="absolute top-8 left-8 font-bold text-xl tracking-tight text-primary flex items-center space-x-2">
+      <Link href="/" className="absolute top-6 start-6 font-bold text-xl tracking-tight text-primary flex items-center gap-2">
         <span className="bg-primary text-primary-foreground px-2 py-1 rounded-md">AI</span>
-        <span>Resume</span>
+        <span>{t("brand")}</span>
       </Link>
 
       <Card className="w-full max-w-md border-border/50 shadow-xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold tracking-tight">Create an account</CardTitle>
-          <CardDescription>
-            Enter your information to get started
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold tracking-tight">{t("auth.registerTitle")}</CardTitle>
+          <CardDescription>{t("auth.registerSubtitle")}</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">{t("auth.fullName")}</Label>
               <Input
                 id="name"
-                placeholder="John Doe"
+                placeholder={t("auth.namePlaceholder")}
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create Account"}
+              {isLoading ? t("auth.registering") : t("auth.registerBtn")}
             </Button>
             <div className="text-sm text-center text-muted-foreground">
-              Already have an account?{" "}
+              {t("auth.hasAccount")}{" "}
               <Link href="/login" className="font-semibold text-primary hover:underline">
-                Sign in
+                {t("auth.signIn")}
               </Link>
             </div>
           </CardFooter>
