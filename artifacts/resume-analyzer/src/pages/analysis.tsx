@@ -57,7 +57,43 @@ interface NormalizedResults {
   jobTitle?: string;
 }
 
-function normalizeResults(raw: Record<string, unknown>, savedScore: number): NormalizedResults {
+// Unwrap whatever shape N8N sends:
+// - plain object: {...}
+// - array of objects: [{...}]
+// - array with output field: [{output: {...}}] or [{output: "string"}]
+// - nested json field: [{json: {...}}]
+function unwrapN8nPayload(raw: unknown): Record<string, unknown> {
+  // If it's an array, take the first element
+  if (Array.isArray(raw) && raw.length > 0) {
+    const first = raw[0];
+    // Check for common N8N wrapper fields
+    if (first && typeof first === "object") {
+      const obj = first as Record<string, unknown>;
+      if (obj.output && typeof obj.output === "object" && !Array.isArray(obj.output)) {
+        return obj.output as Record<string, unknown>;
+      }
+      if (obj.output && typeof obj.output === "string") {
+        try { return JSON.parse(obj.output) as Record<string, unknown>; } catch { /* ignore */ }
+      }
+      if (obj.json && typeof obj.json === "object") {
+        return obj.json as Record<string, unknown>;
+      }
+      if (obj.data && typeof obj.data === "object") {
+        return obj.data as Record<string, unknown>;
+      }
+      return obj;
+    }
+  }
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+}
+
+function normalizeResults(rawInput: unknown, savedScore: number): NormalizedResults {
+  const raw = unwrapN8nPayload(rawInput);
+
+
   const get = (keys: string[]): unknown => {
     for (const k of keys) {
       if (raw[k] !== undefined && raw[k] !== null && raw[k] !== "") return raw[k];
@@ -65,26 +101,41 @@ function normalizeResults(raw: Record<string, unknown>, savedScore: number): Nor
     return undefined;
   };
 
-  const scoreRaw = get(["Score", "score", "ats_score", "match_score", "overall_score"]);
+  const scoreRaw = get(["Score", "score", "ats_score", "match_score", "overall_score", "total_score"]);
   const overallScore = extractNumber(scoreRaw) ?? savedScore ?? 0;
 
-  const matchLevel = toString(get(["Match Level", "match_level", "matchLevel", "level"]));
-  const atsScore = extractNumber(get(["ats_score", "ATS Score", "ats score"]));
+  const matchLevel = toString(get(["Match Level", "match_level", "matchLevel", "level", "match level"]));
+  const atsScore = extractNumber(get(["ats_score", "ATS Score", "ats score", "ats"]));
   const matchScore = extractNumber(get(["match_score", "Match Score", "match score"]));
 
-  const foundSkills = toStringArray(get(["Found Skills", "found_skills", "foundSkills", "strengths", "Strengths"]));
-  const missingSkills = toStringArray(get(["Missing Skills", "missing_skills", "missingSkills"]));
-  const missingKeywords = toStringArray(get(["Missing Keywords", "missing_keywords", "missingKeywords"]));
+  const foundSkills = toStringArray(get([
+    "Found Skills", "found_skills", "foundSkills",
+    "skills_found", "existing_skills", "matched_skills"
+  ]));
+  const missingSkills = toStringArray(get([
+    "Missing Skills", "missing_skills", "missingSkills",
+    "skills_missing", "required_skills", "missing skills"
+  ]));
+  const missingKeywords = toStringArray(get([
+    "Missing Keywords", "missing_keywords", "missingKeywords"
+  ]));
 
-  const strengthsRaw = toStringArray(get(["strengths", "Strengths"]));
-  const weaknessesRaw = toStringArray(get(["weaknesses", "Weaknesses", "Areas for Improvement"]));
-  const recommendations = toStringArray(
-    get(["Recommendation", "Recommendations", "recommendations", "recommendation"])
-  );
+  const strengthsRaw = toStringArray(get(["strengths", "Strengths", "strong_points"]));
+  const weaknessesRaw = toStringArray(get([
+    "weaknesses", "Weaknesses", "Areas for Improvement", "weak_points", "areas_for_improvement"
+  ]));
+  const recommendations = toStringArray(get([
+    "Recommendation", "Recommendations", "recommendations", "recommendation",
+    "suggestions", "Suggestions", "action_items"
+  ]));
 
-  const analysis = toString(get(["Analysis", "analysis", "feedback", "Feedback", "summary", "Summary"]));
+  const analysis = toString(get([
+    "Analysis", "analysis", "feedback", "Feedback",
+    "summary", "Summary", "details", "Details", "review", "Review",
+    "explanation", "Explanation"
+  ]));
 
-  const jobTitle = toString(get(["job_title", "Job Title", "jobTitle"]));
+  const jobTitle = toString(get(["job_title", "Job Title", "jobTitle", "position", "Position"]));
 
   return {
     overallScore,
@@ -217,7 +268,7 @@ export default function AnalysisResult() {
   }
 
   const norm = normalizeResults(
-    analysis.results as Record<string, unknown>,
+    analysis.results,
     analysis.score ?? 0
   );
 
@@ -233,11 +284,16 @@ export default function AnalysisResult() {
     overallScore >= 60 ? "text-yellow-600 dark:text-yellow-400" :
     "text-red-600 dark:text-red-400";
 
-  const matchLevelColor =
-    matchLevel?.toLowerCase().includes("strong") ? "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30" :
-    matchLevel?.toLowerCase().includes("good") ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30" :
-    matchLevel?.toLowerCase().includes("partial") ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30" :
-    "bg-muted text-muted-foreground";
+  const matchLevelColor = (() => {
+    const ml = (matchLevel ?? "").toLowerCase();
+    const isStrong = ml.includes("strong") || ml.includes("excellent") || ml.includes("ممتاز") || ml.includes("قوي");
+    const isGood   = ml.includes("good")   || ml.includes("جيد");
+    const isWeak   = ml.includes("weak")   || ml.includes("poor") || ml.includes("ضعيف") || ml.includes("منخفض");
+    if (isStrong) return "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30";
+    if (isGood)   return "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30";
+    if (isWeak)   return "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30";
+    return "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30";
+  })();
 
   const hasScoreBreakdown = atsScore !== undefined || matchScore !== undefined;
   const hasFoundSkills = norm.foundSkills.length > 0;
