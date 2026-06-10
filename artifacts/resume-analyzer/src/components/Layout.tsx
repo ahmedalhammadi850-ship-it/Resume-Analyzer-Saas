@@ -1,6 +1,8 @@
 import { Link, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "./ThemeToggle";
+import { LanguageToggle } from "./LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
@@ -20,6 +22,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const { userProfile, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
@@ -30,22 +33,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/analyze", label: "New Analysis", icon: FileText },
-    { href: "/history", label: "History", icon: History },
-    { href: "/settings", label: "Settings", icon: SettingsIcon },
+    { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { href: "/analyze", label: t("nav.newAnalysis"), icon: FileText },
+    { href: "/history", label: t("nav.history"), icon: History },
+    { href: "/settings", label: t("nav.settings"), icon: SettingsIcon },
   ];
 
   if (userProfile?.role === "admin") {
-    navItems.push({ href: "/admin", label: "Admin Panel", icon: ShieldAlert });
+    navItems.push({ href: "/admin", label: t("nav.adminPanel"), icon: ShieldAlert });
   }
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-6">
-        <Link href="/" className="flex items-center space-x-2 font-bold text-xl tracking-tight text-primary">
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary">
           <span className="bg-primary text-primary-foreground px-2 py-1 rounded-md">AI</span>
-          <span>Resume</span>
+          <span>{t("brand")}</span>
         </Link>
       </div>
 
@@ -77,10 +80,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="text-xs text-muted-foreground truncate">{userProfile?.email}</div>
           <div className="mt-2 flex items-center justify-between">
             <Badge variant={userProfile?.plan === "pro" ? "default" : "secondary"} className="uppercase text-[10px]">
-              {userProfile?.plan} PLAN
+              {userProfile?.plan === "pro" ? t("common.pro") : t("common.free")} PLAN
             </Badge>
             {userProfile?.plan === "free" && (
-              <span className="text-xs text-muted-foreground">{userProfile.remainingScans} scans left</span>
+              <span className="text-xs text-muted-foreground">{userProfile.remainingScans} {t("common.scansLeft")}</span>
             )}
           </div>
         </div>
@@ -90,8 +93,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={handleLogout}
         >
-          <LogOut className="h-5 w-5 mr-3" />
-          Log out
+          <LogOut className="h-5 w-5 me-3" />
+          {t("nav.logOut")}
         </Button>
       </div>
     </div>
@@ -105,7 +108,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:pl-64 min-h-[100dvh]">
+      <div className="flex-1 flex flex-col lg:pl-64 rtl:lg:pr-64 rtl:lg:pl-0 min-h-[100dvh]">
         {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between p-4 bg-background border-b sticky top-0 z-20">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -121,14 +124,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Sheet>
           
           <Link href="/" className="font-bold text-lg text-primary tracking-tight">
-            AI Resume
+            AI {t("brand")}
           </Link>
           
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </header>
 
         {/* Desktop Header (just theme toggle for now) */}
-        <header className="hidden lg:flex justify-end p-4 sticky top-0 z-10 bg-muted/30 backdrop-blur-sm">
+        <header className="hidden lg:flex justify-end p-4 sticky top-0 z-10 bg-muted/30 backdrop-blur-sm gap-4 items-center">
+          <LanguageToggle />
           <ThemeToggle />
         </header>
 
