@@ -13,6 +13,7 @@ const en = {
       logOut: "Log out",
       logIn: "Log in",
       getStarted: "Get Started",
+      home: "Home",
       pricing: "Pricing",
       aboutUs: "About Us",
     },

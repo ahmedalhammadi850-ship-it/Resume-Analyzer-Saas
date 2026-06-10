@@ -13,6 +13,7 @@ const ar = {
       logOut: "تسجيل الخروج",
       logIn: "تسجيل الدخول",
       getStarted: "ابدأ الآن",
+      home: "الرئيسية",
       pricing: "الأسعار",
       aboutUs: "من نحن",
     },
