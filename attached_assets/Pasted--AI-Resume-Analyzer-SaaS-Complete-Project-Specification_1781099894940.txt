@@ -1,0 +1,504 @@
+# AI Resume Analyzer SaaS - Complete Project Specification
+
+## Project Overview
+
+Build a complete SaaS platform for Resume Analysis and ATS Optimization.
+
+The platform allows users to upload resumes, compare them against job descriptions, receive AI-powered feedback, track historical analyses, manage subscriptions, and access a professional dashboard.
+
+The system should be production-ready and scalable.
+
+---
+
+# Technology Stack
+
+## Frontend
+
+* React
+* TypeScript
+* Vite
+* Responsive Design
+
+## Authentication
+
+* Firebase Authentication
+
+Required:
+
+* Email/Password Registration
+* Login
+* Forgot Password
+* Logout
+* Protected Routes
+
+---
+
+## Database
+
+Use Firebase Firestore.
+
+Store:
+
+* Users
+* Analysis Results
+* Subscription Data
+* Usage Statistics
+* System Settings
+
+---
+
+## File Storage
+
+Use Firebase Storage.
+
+Store:
+
+* Uploaded Resumes
+* Generated Reports
+* User Files
+
+---
+
+## Analysis Engine
+
+All resume analysis must be performed through n8n Webhooks.
+
+Do not perform AI analysis inside the frontend.
+
+---
+
+# Main Features
+
+## Feature 1: Resume vs Job Description Analysis
+
+User Inputs:
+
+* Resume File (PDF/DOCX)
+* Job Title
+* Job Description
+
+Send POST request to:
+
+https://ahmed11ali.app.n8n.cloud/webhook-test/628cdfcd-4800-4277-83a6-c99ee4992aa8
+
+Using FormData:
+
+resume_file
+job_title
+job_description
+
+After receiving the response:
+
+* Save results to Firestore
+* Display results in dashboard
+
+---
+
+## Feature 2: General Resume Review
+
+User uploads:
+
+* Resume File (PDF/DOCX)
+
+Send POST request to:
+
+https://ahmed11ali.app.n8n.cloud/webhook-test/7a668c94-f72c-4bf3-af0e-8f446d1e9314
+
+Using FormData:
+
+resume_file
+
+After receiving the response:
+
+* Save results to Firestore
+* Display results in dashboard
+
+---
+
+# User Authentication
+
+## Registration
+
+Fields:
+
+* Full Name
+* Email
+* Password
+* Confirm Password
+
+Validation required.
+
+After registration:
+
+Create Firestore user document.
+
+---
+
+## Login
+
+Fields:
+
+* Email
+* Password
+
+---
+
+## Forgot Password
+
+Send password reset email using Firebase.
+
+---
+
+## Logout
+
+Allow secure logout.
+
+---
+
+# User Dashboard
+
+After login users see:
+
+## Quick Stats
+
+* Total Analyses
+* Remaining Scans
+* ATS Average Score
+* Current Plan
+
+---
+
+## Recent Analyses
+
+Display:
+
+* Resume Name
+* Analysis Type
+* Date
+* Score
+
+---
+
+## Analysis History
+
+Users can:
+
+* View old analyses
+* Search analyses
+* Filter analyses
+* Open full report
+
+---
+
+# Results Dashboard
+
+Create professional analysis pages.
+
+Display:
+
+## ATS Score
+
+Visual score card.
+
+---
+
+## Match Score
+
+Progress bar.
+
+---
+
+## Missing Skills
+
+List missing skills.
+
+---
+
+## Missing Keywords
+
+List missing keywords.
+
+---
+
+## Strengths
+
+Display positive points.
+
+---
+
+## Weaknesses
+
+Display weaknesses.
+
+---
+
+## Recommendations
+
+Display improvement suggestions.
+
+---
+
+## AI Insights
+
+Display all extra fields returned by API dynamically.
+
+The UI must adapt automatically to new fields returned by the webhook.
+
+---
+
+# Subscription System
+
+## Free Plan
+
+* 5 analyses per month
+* Basic dashboard
+* Standard reports
+
+---
+
+## Pro Plan
+
+* Unlimited analyses
+* Full reports
+* Priority processing
+* Advanced insights
+
+---
+
+## User Limits
+
+Before every analysis:
+
+Check remaining scans.
+
+If user exceeded limit:
+
+Show upgrade page.
+
+Do not allow analysis.
+
+---
+
+## Subscription Data
+
+Store:
+
+* Current Plan
+* Status
+* Start Date
+* Renewal Date
+* Usage
+
+---
+
+# Admin Panel
+
+Create complete admin dashboard.
+
+Admin features:
+
+## Users Management
+
+* View users
+* Search users
+* Suspend users
+* Delete users
+
+---
+
+## Analytics
+
+Show:
+
+* Total Users
+* Total Analyses
+* Active Subscribers
+* Monthly Growth
+
+---
+
+## Revenue Dashboard
+
+Display:
+
+* Monthly Revenue
+* Subscription Statistics
+* Conversion Rates
+
+---
+
+## System Monitoring
+
+Display:
+
+* API Usage
+* Analysis Requests
+* Failed Requests
+* Webhook Status
+
+---
+
+# Firestore Collections
+
+## users
+
+Fields:
+
+* uid
+* name
+* email
+* plan
+* remainingScans
+* role
+* createdAt
+
+---
+
+## analyses
+
+Fields:
+
+* analysisId
+* userId
+* analysisType
+* fileName
+* results
+* score
+* createdAt
+
+---
+
+## subscriptions
+
+Fields:
+
+* userId
+* plan
+* status
+* renewalDate
+
+---
+
+## settings
+
+Fields:
+
+* freePlanLimit
+* monthlyLimits
+* pricing
+
+---
+
+# UI/UX Requirements
+
+Create a modern SaaS design.
+
+Requirements:
+
+* Clean Layout
+* Responsive Design
+* Mobile Friendly
+* Tablet Friendly
+* Desktop Friendly
+* Dark Mode
+* Light Mode
+* Smooth Animations
+* Modern Cards
+* Beautiful Typography
+* Premium Appearance
+
+---
+
+# Landing Page
+
+Sections:
+
+## Hero Section
+
+Strong headline.
+
+Professional CTA.
+
+---
+
+## Features Section
+
+Highlight platform features.
+
+---
+
+## How It Works
+
+3-step explanation.
+
+---
+
+## Pricing Section
+
+Free vs Pro.
+
+---
+
+## Testimonials Section
+
+Professional layout.
+
+---
+
+## FAQ Section
+
+Frequently asked questions.
+
+---
+
+## Footer
+
+Professional footer.
+
+---
+
+# Security Requirements
+
+* Protected Routes
+* Firestore Security Rules
+* Firebase Auth Protection
+* File Validation
+* Upload Restrictions
+* Error Handling
+* Loading States
+
+---
+
+# Code Quality
+
+Requirements:
+
+* Clean Architecture
+* Reusable Components
+* TypeScript Types
+* Modular Structure
+* Scalable Folder Structure
+* Production Ready Code
+
+---
+
+# Deliverables
+
+Generate a complete production-ready SaaS application including:
+
+* React Frontend
+* Firebase Authentication
+* Firestore Database Integration
+* Firebase Storage Integration
+* n8n Webhook Integration
+* User Dashboard
+* Admin Dashboard
+* Subscription Management
+* Analysis History
+* ATS Results Dashboard
+* Responsive UI
+* Dark Mode
+* Complete Folder Structure
+* Deployment Ready
+
+The final product should look and feel like a premium global SaaS platform similar to leading resume optimization services.
