@@ -18,19 +18,26 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             <span>{t("brand")}</span>
           </Link>
 
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
+              <Link href="/pricing">{t("nav.pricing")}</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
+              <Link href="/about">{t("nav.aboutUs")}</Link>
+            </Button>
+            <div className="hidden md:block w-px h-5 bg-border mx-1" />
             <LanguageToggle />
             <ThemeToggle />
             {currentUser ? (
-              <Button asChild variant="default">
+              <Button asChild variant="default" size="sm">
                 <Link href="/dashboard">{t("nav.dashboard")}</Link>
               </Button>
             ) : (
               <>
-                <Button asChild variant="ghost" className="hidden sm:inline-flex">
+                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <Link href="/login">{t("nav.logIn")}</Link>
                 </Button>
-                <Button asChild>
+                <Button asChild size="sm">
                   <Link href="/register">{t("nav.getStarted")}</Link>
                 </Button>
               </>

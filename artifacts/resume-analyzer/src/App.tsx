@@ -17,6 +17,7 @@ import Analyze from "@/pages/analyze";
 import History from "@/pages/history";
 import AnalysisResult from "@/pages/analysis";
 import Pricing from "@/pages/pricing";
+import About from "@/pages/about";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/pricing" component={Pricing} />
+      <Route path="/about" component={About} />
       
       {/* Protected Routes */}
       <Route path="/dashboard">
