@@ -34,6 +34,39 @@ export async function uploadResumeFile(userId: string, file: File): Promise<stri
 }
 
 // ── Analysis Webhooks ────────────────────────────────────────────────────────
+
+/**
+ * Validates that the N8N response actually contains analysis data.
+ * N8N webhook-test URLs return empty/error responses when not in active test mode.
+ */
+function validateN8nResponse(data: unknown, webhookUrl: string): AnalysisResults {
+  // Handle array response (N8N sometimes returns [{...}])
+  const result = Array.isArray(data) ? data[0] : data;
+
+  if (!result || typeof result !== "object") {
+    throw new Error(
+      webhookUrl.includes("webhook-test")
+        ? "N8N webhook-test لم يستجب. تأكد أن الـ workflow مفتوح في وضع الاختبار في N8N، أو استخدم رابط webhook الإنتاجي بدلاً من webhook-test."
+        : "لم يتم استلام بيانات من N8N. تحقق من إعدادات الـ workflow."
+    );
+  }
+
+  // Check for N8N error/info messages instead of real data
+  const r = result as Record<string, unknown>;
+  if (
+    Object.keys(r).length === 0 ||
+    (r.message && !r.score && !r.match_level && !r.analysis)
+  ) {
+    throw new Error(
+      webhookUrl.includes("webhook-test")
+        ? "N8N webhook-test غير نشط. افتح الـ workflow في N8N واضغط 'Test workflow' ثم أعد المحاولة، أو فعّل الـ workflow واستخدم رابط /webhook/ بدلاً من /webhook-test/."
+        : `N8N لم يُرجع نتائج تحليل. الرد: ${JSON.stringify(r).slice(0, 200)}`
+    );
+  }
+
+  return result as AnalysisResults;
+}
+
 export async function runJdAnalysis(
   file: File,
   jobTitle: string,
@@ -43,17 +76,39 @@ export async function runJdAnalysis(
   form.append("resume_file", file);
   form.append("job_title", jobTitle);
   form.append("job_description", jobDescription);
-  const res = await fetch(N8N_WEBHOOK_JD, { method: "POST", body: form });
-  if (!res.ok) throw new Error("Analysis failed. Please try again.");
-  return res.json();
+
+  let res: Response;
+  try {
+    res = await fetch(N8N_WEBHOOK_JD, { method: "POST", body: form });
+  } catch {
+    throw new Error("تعذّر الاتصال بـ N8N. تحقق من اتصالك بالإنترنت أو رابط الـ webhook.");
+  }
+
+  if (!res.ok) {
+    throw new Error(`N8N رجع بخطأ (${res.status}). تحقق من إعدادات الـ webhook.`);
+  }
+
+  const data = await res.json();
+  return validateN8nResponse(data, N8N_WEBHOOK_JD);
 }
 
 export async function runGeneralAnalysis(file: File): Promise<AnalysisResults> {
   const form = new FormData();
   form.append("resume_file", file);
-  const res = await fetch(N8N_WEBHOOK_GENERAL, { method: "POST", body: form });
-  if (!res.ok) throw new Error("Analysis failed. Please try again.");
-  return res.json();
+
+  let res: Response;
+  try {
+    res = await fetch(N8N_WEBHOOK_GENERAL, { method: "POST", body: form });
+  } catch {
+    throw new Error("تعذّر الاتصال بـ N8N. تحقق من اتصالك بالإنترنت أو رابط الـ webhook.");
+  }
+
+  if (!res.ok) {
+    throw new Error(`N8N رجع بخطأ (${res.status}). تحقق من إعدادات الـ webhook.`);
+  }
+
+  const data = await res.json();
+  return validateN8nResponse(data, N8N_WEBHOOK_GENERAL);
 }
 
 // ── Save & Fetch Analyses ────────────────────────────────────────────────────
