@@ -239,6 +239,43 @@ const en = {
       mostPopular: "Most Popular",
     },
 
+    // Public Pricing page
+    pubPricing: {
+      badge: "Transparent Pricing",
+      title: "Simple, honest pricing.",
+      subtitle: "Start for free. Upgrade when you're ready to get serious.",
+      forever: "/ forever",
+      goToDashboard: "Go to Dashboard",
+      faqTitle: "Common Questions",
+      faq1Q: "When does my scan count reset?",
+      faq1A: "Free plan scans reset at the start of each calendar month.",
+      faq2Q: "Can I cancel Pro at any time?",
+      faq2A: "Yes. Cancel anytime with no penalties or hidden fees.",
+      faq3Q: "Is there a trial for Pro?",
+      faq3A: "The Free plan lets you try core features at no cost before upgrading.",
+      faq4Q: "What payment methods are accepted?",
+      faq4A: "We accept all major credit and debit cards via our secure payment processor.",
+      ctaTitle: "Ready to land your next interview?",
+      ctaSubtitle: "Join thousands of professionals who optimized their resume with AI.",
+      ctaBtn: "Start for Free",
+      free: {
+        f1: "5 resume scans per month",
+        f2: "Basic ATS scoring",
+        f3: "Job Description matching",
+        f4: "Full AI Insight breakdown",
+        f5: "Priority processing",
+        f6: "Keyword gap analysis",
+      },
+      pro: {
+        f1: "Unlimited resume scans",
+        f2: "Advanced ATS scoring",
+        f3: "Deep Job Description matching",
+        f4: "Full AI Insight breakdown",
+        f5: "Priority processing",
+        f6: "Advanced keyword gap analysis",
+      },
+    },
+
     // Dashboard Pricing page
     dashPricing: {
       title: "Plans & Pricing",

@@ -37,7 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { href: "/analyze", label: t("nav.newAnalysis"), icon: FileText },
     { href: "/history", label: t("nav.history"), icon: History },
-    { href: "/pricing", label: t("nav.pricing"), icon: CreditCard },
+    { href: "/plans", label: t("nav.pricing"), icon: CreditCard },
     { href: "/settings", label: t("nav.settings"), icon: SettingsIcon },
   ];
 

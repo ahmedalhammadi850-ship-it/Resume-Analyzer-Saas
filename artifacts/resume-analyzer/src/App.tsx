@@ -17,6 +17,7 @@ import Analyze from "@/pages/analyze";
 import History from "@/pages/history";
 import AnalysisResult from "@/pages/analysis";
 import Pricing from "@/pages/pricing";
+import PublicPricing from "@/pages/public-pricing";
 import About from "@/pages/about";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
@@ -31,7 +32,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
-      <Route path="/pricing" component={Pricing} />
+      <Route path="/pricing" component={PublicPricing} />
       <Route path="/about" component={About} />
       
       {/* Protected Routes */}
@@ -46,6 +47,9 @@ function Router() {
       </Route>
       <Route path="/analysis/:id">
         <ProtectedRoute><AnalysisResult /></ProtectedRoute>
+      </Route>
+      <Route path="/plans">
+        <ProtectedRoute><Pricing /></ProtectedRoute>
       </Route>
       <Route path="/settings">
         <ProtectedRoute><Settings /></ProtectedRoute>
