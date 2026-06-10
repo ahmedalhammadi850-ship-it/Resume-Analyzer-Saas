@@ -20,13 +20,13 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
 
           <nav className="flex items-center gap-1 sm:gap-2">
             <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
-              <Link href="/">{t("nav.home")}</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
               <Link href="/pricing">{t("nav.pricing")}</Link>
             </Button>
             <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
               <Link href="/about">{t("nav.aboutUs")}</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex text-muted-foreground hover:text-foreground">
+              <Link href="/">{t("nav.home")}</Link>
             </Button>
             <div className="hidden md:block w-px h-5 bg-border mx-1" />
             <LanguageToggle />
