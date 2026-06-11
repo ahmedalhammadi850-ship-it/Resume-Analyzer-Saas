@@ -225,6 +225,15 @@ export async function deleteUser(uid: string): Promise<void> {
   await deleteDoc(doc(db, "users", uid));
 }
 
+export async function addScansToUser(uid: string, amount: number): Promise<void> {
+  const ref = doc(db, "users", uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("User not found");
+  const profile = snap.data() as UserProfile;
+  const current = profile.remainingScans ?? 0;
+  await updateDoc(ref, { remainingScans: current + amount });
+}
+
 export async function getAdminStats(): Promise<AdminStats> {
   const [usersSnap, analysesSnap] = await Promise.all([
     getDocs(collection(db, "users")),
