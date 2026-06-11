@@ -22,6 +22,8 @@ import {
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
+const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();
   const { userProfile, logout } = useAuth();
@@ -42,7 +44,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/settings", label: t("nav.settings"), icon: SettingsIcon },
   ];
 
-  if (userProfile?.role === "admin") {
+  const isAdmin = userProfile?.role === "admin" || ADMIN_EMAILS.includes(userProfile?.email ?? "");
+  if (isAdmin) {
     navItems.push({ href: "/admin", label: t("nav.adminPanel"), icon: ShieldAlert });
   }
 
