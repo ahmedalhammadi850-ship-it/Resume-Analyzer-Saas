@@ -16,6 +16,7 @@ const ar = {
       home: "الرئيسية",
       pricing: "الأسعار",
       aboutUs: "من نحن",
+      resumeBuilder: "إنشاء سيرة ذاتية",
     },
 
     // About page

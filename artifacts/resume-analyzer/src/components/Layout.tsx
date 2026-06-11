@@ -12,7 +12,8 @@ import {
   ShieldAlert,
   LogOut,
   Menu,
-  CreditCard
+  CreditCard,
+  PenLine
 } from "lucide-react";
 import {
   Sheet,
@@ -39,6 +40,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/dashboard", label: t("nav.dashboard"), icon: LayoutDashboard },
     { href: "/analyze", label: t("nav.newAnalysis"), icon: FileText },
+    { href: "/resume-builder", label: t("nav.resumeBuilder"), icon: PenLine },
     { href: "/history", label: t("nav.history"), icon: History },
     { href: "/plans", label: t("nav.pricing"), icon: CreditCard },
     { href: "/settings", label: t("nav.settings"), icon: SettingsIcon },

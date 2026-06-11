@@ -16,6 +16,7 @@ const en = {
       home: "Home",
       pricing: "Pricing",
       aboutUs: "About Us",
+      resumeBuilder: "Resume Builder",
     },
 
     // About page

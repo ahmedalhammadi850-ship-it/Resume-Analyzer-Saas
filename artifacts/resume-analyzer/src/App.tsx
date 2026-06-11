@@ -21,6 +21,7 @@ import PublicPricing from "@/pages/public-pricing";
 import About from "@/pages/about";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
+import ResumeBuilder from "@/pages/resume-builder";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,10 @@ function Router() {
         <ProtectedRoute><Settings /></ProtectedRoute>
       </Route>
       
+      <Route path="/resume-builder">
+        <ProtectedRoute><ResumeBuilder /></ProtectedRoute>
+      </Route>
+
       {/* Admin Route */}
       <Route path="/admin">
         <ProtectedRoute requireRole="admin"><Admin /></ProtectedRoute>
