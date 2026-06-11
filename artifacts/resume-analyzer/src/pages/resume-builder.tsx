@@ -8,6 +8,7 @@ import { Send, Bot, User, Download, FileText, Loader2, RefreshCw } from "lucide-
 import { cn } from "@/lib/utils";
 
 const N8N_WEBHOOK = "https://ahmed11ali.app.n8n.cloud/webhook-test/952cdd26-1852-4ba8-9a3c-0bd2c7e85f5e";
+const PROXY_URL = `${import.meta.env.BASE_URL}api/n8n-proxy`.replace(/\/+/g, "/");
 
 type Role = "assistant" | "user";
 
@@ -73,10 +74,10 @@ export default function ResumeBuilder() {
         history: conversationHistory,
       };
 
-      const res = await fetch(N8N_WEBHOOK, {
+      const res = await fetch(PROXY_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ webhook_url: N8N_WEBHOOK, ...payload }),
       });
 
       if (!res.ok) {
