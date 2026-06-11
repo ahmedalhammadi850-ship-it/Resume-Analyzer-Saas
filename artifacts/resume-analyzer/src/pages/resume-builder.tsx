@@ -84,24 +84,20 @@ export default function ResumeBuilder() {
         throw new Error(`خطأ في الاتصال: ${res.status}`);
       }
 
-      // Read as text first, then try to parse as JSON
-      const rawText = await res.text();
+      const data = await res.json();
 
-      // Normalize N8N response
       let replyText = "";
       let fileUrl: string | undefined;
       let fileName: string | undefined;
 
-      // If N8N returned "Workflow was started" or similar non-JSON plain text
-      let data: unknown = rawText;
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        // Not JSON — use the raw text as the reply
-        replyText = rawText;
-      }
-
-      if (!replyText) {
+      // ── Handle binary file returned by proxy ──────────────────────────────
+      if (data?.type === "file" && data?.base64) {
+        const blob = base64ToBlob(data.base64, data.mimeType ?? "application/pdf");
+        fileUrl = URL.createObjectURL(blob);
+        fileName = data.fileName ?? "resume.pdf";
+        replyText = "✅ سيرتك الذاتية جاهزة! اضغط على زر التنزيل أدناه.";
+      } else {
+        // ── Handle JSON / text response ───────────────────────────────────
         const item = Array.isArray(data) ? data[0] : data;
         const inner =
           (item as any)?.output ??
@@ -123,27 +119,27 @@ export default function ResumeBuilder() {
             (obj.response as string) ??
             "";
 
-          // Check for file download
+          // File URL in response
           if (obj.file_url || obj.fileUrl || obj.download_url || obj.pdf_url) {
             fileUrl = (obj.file_url ?? obj.fileUrl ?? obj.download_url ?? obj.pdf_url) as string;
             fileName = (obj.file_name ?? obj.fileName ?? "resume.pdf") as string;
           }
-          // If response has a "resume" key
-          if (obj.resume) {
-            if (typeof obj.resume === "string" && obj.resume.startsWith("http")) {
+          // base64 resume field
+          if (obj.resume && typeof obj.resume === "string") {
+            if (obj.resume.startsWith("http")) {
               fileUrl = obj.resume;
               fileName = "resume.pdf";
-            } else if (typeof obj.resume === "string" && obj.resume.length > 200) {
+            } else if (obj.resume.length > 200) {
               const blob = base64ToBlob(obj.resume, "application/pdf");
               fileUrl = URL.createObjectURL(blob);
               fileName = "resume.pdf";
             }
           }
         }
-      }
 
-      if (!replyText && !fileUrl) {
-        replyText = "لم أتلقَّ رداً واضحاً. حاول مرة أخرى.";
+        if (!replyText && !fileUrl) {
+          replyText = "لم أتلقَّ رداً واضحاً. حاول مرة أخرى.";
+        }
       }
 
       if (fileUrl) {
