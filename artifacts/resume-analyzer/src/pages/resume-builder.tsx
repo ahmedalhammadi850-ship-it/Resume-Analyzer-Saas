@@ -83,38 +83,60 @@ export default function ResumeBuilder() {
         throw new Error(`خطأ في الاتصال: ${res.status}`);
       }
 
-      const data = await res.json();
+      // Read as text first, then try to parse as JSON
+      const rawText = await res.text();
 
       // Normalize N8N response
       let replyText = "";
       let fileUrl: string | undefined;
       let fileName: string | undefined;
 
-      const item = Array.isArray(data) ? data[0] : data;
-      const inner =
-        item?.output ?? item?.json ?? item?.message ?? item?.reply ?? item?.text ?? item;
+      // If N8N returned "Workflow was started" or similar non-JSON plain text
+      let data: unknown = rawText;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        // Not JSON — use the raw text as the reply
+        replyText = rawText;
+      }
 
-      if (typeof inner === "string") {
-        replyText = inner;
-      } else if (typeof inner === "object" && inner !== null) {
-        replyText =
-          inner.message ?? inner.reply ?? inner.text ?? inner.content ?? inner.response ?? "";
+      if (!replyText) {
+        const item = Array.isArray(data) ? data[0] : data;
+        const inner =
+          (item as any)?.output ??
+          (item as any)?.json ??
+          (item as any)?.message ??
+          (item as any)?.reply ??
+          (item as any)?.text ??
+          item;
 
-        // Check for file download
-        if (inner.file_url || inner.fileUrl || inner.download_url || inner.pdf_url) {
-          fileUrl = inner.file_url ?? inner.fileUrl ?? inner.download_url ?? inner.pdf_url;
-          fileName = inner.file_name ?? inner.fileName ?? "resume.pdf";
-        }
-        // If response has a "resume" key with base64 or URL
-        if (inner.resume) {
-          if (typeof inner.resume === "string" && inner.resume.startsWith("http")) {
-            fileUrl = inner.resume;
-            fileName = "resume.pdf";
-          } else if (typeof inner.resume === "string" && inner.resume.length > 200) {
-            // Possibly base64 PDF
-            const blob = base64ToBlob(inner.resume, "application/pdf");
-            fileUrl = URL.createObjectURL(blob);
-            fileName = "resume.pdf";
+        if (typeof inner === "string") {
+          replyText = inner;
+        } else if (typeof inner === "object" && inner !== null) {
+          const obj = inner as Record<string, unknown>;
+          replyText =
+            (obj.message as string) ??
+            (obj.reply as string) ??
+            (obj.text as string) ??
+            (obj.content as string) ??
+            (obj.response as string) ??
+            "";
+
+          // Check for file download
+          if (obj.file_url || obj.fileUrl || obj.download_url || obj.pdf_url) {
+            fileUrl = (obj.file_url ?? obj.fileUrl ?? obj.download_url ?? obj.pdf_url) as string;
+            fileName = (obj.file_name ?? obj.fileName ?? "resume.pdf") as string;
+          }
+          // If response has a "resume" key
+          if (obj.resume) {
+            if (typeof obj.resume === "string" && obj.resume.startsWith("http")) {
+              fileUrl = obj.resume;
+              fileName = "resume.pdf";
+            } else if (typeof obj.resume === "string" && obj.resume.length > 200) {
+              const blob = base64ToBlob(obj.resume, "application/pdf");
+              fileUrl = URL.createObjectURL(blob);
+              fileName = "resume.pdf";
+            }
           }
         }
       }
