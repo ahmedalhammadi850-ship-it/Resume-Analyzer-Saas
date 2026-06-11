@@ -9,13 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { uploadResumeFile, runJdAnalysis, runGeneralAnalysis, saveAnalysis, decrementScans } from "@/lib/firestore";
-import { FileUp, Target, Zap, AlertCircle, Loader2 } from "lucide-react";
+import { uploadResumeFile, runJdAnalysis, runGeneralAnalysis, saveAnalysis, decrementScans, addScansToUser } from "@/lib/firestore";
+import { FileUp, Target, Zap, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 
+const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
+
 export default function Analyze() {
-  const { userProfile, refreshProfile } = useAuth();
+  const { userProfile, currentUser, refreshProfile } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -25,9 +27,25 @@ export default function Analyze() {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isAddingScans, setIsAddingScans] = useState(false);
 
   const isFreeUser = userProfile?.plan === "free";
   const outOfScans = isFreeUser && (userProfile?.remainingScans || 0) <= 0;
+  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email ?? "");
+
+  const handleAddScans = async () => {
+    if (!userProfile?.uid) return;
+    setIsAddingScans(true);
+    try {
+      await addScansToUser(userProfile.uid, 10);
+      await refreshProfile();
+      toast({ title: "✅ تمت إضافة 10 فحوصات لحسابك" });
+    } catch (e: any) {
+      toast({ title: "فشلت العملية", description: e.message, variant: "destructive" });
+    } finally {
+      setIsAddingScans(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -107,11 +125,29 @@ export default function Analyze() {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>{t("analyze.scanLimitReached")}</AlertTitle>
-            <AlertDescription className="flex items-center justify-between mt-2">
+            <AlertDescription className="mt-2 space-y-3">
               <span>{t("analyze.scanLimitMsg")}</span>
-              <Button variant="outline" size="sm" onClick={() => setLocation("/pricing")}>
-                {t("analyze.viewPlans")}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => setLocation("/pricing")}>
+                  {t("analyze.viewPlans")}
+                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddScans}
+                    disabled={isAddingScans}
+                    className="border-green-500 text-green-700 hover:bg-green-50"
+                  >
+                    {isAddingScans ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                    )}
+                    إضافة 10 فحوصات (مدير)
+                  </Button>
+                )}
+              </div>
             </AlertDescription>
           </Alert>
         )}
