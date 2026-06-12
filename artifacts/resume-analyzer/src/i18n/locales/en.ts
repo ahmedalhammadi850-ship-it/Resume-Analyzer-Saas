@@ -311,7 +311,7 @@ const en = {
         f6: "Keyword gap analysis",
       },
       pro: {
-        f1: "Unlimited resume scans / month",
+        f1: "25 resume scans / month",
         f2: "Advanced ATS scoring",
         f3: "Deep Job Description matching",
         f4: "Full AI Insight breakdown",
@@ -366,7 +366,7 @@ const en = {
         f6: "Keyword gap analysis",
       },
       pro: {
-        f1: "Unlimited resume scans / month",
+        f1: "25 resume scans / month",
         f2: "Advanced ATS scoring",
         f3: "Deep Job Description matching",
         f4: "Full AI Insight breakdown",

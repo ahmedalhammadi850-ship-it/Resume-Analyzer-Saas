@@ -283,6 +283,7 @@ export async function getUpgradeRequests(): Promise<UpgradeRequest[]> {
 export async function approveUpgradeRequest(requestId: string, userId: string): Promise<void> {
   await updateDoc(doc(db, "users", userId), {
     plan: "pro",
+    remainingScans: 25,
     "upgradeRequest.status": "approved",
     "upgradeRequest.reviewedAt": new Date().toISOString(),
   });

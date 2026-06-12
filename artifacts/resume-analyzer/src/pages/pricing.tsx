@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Check, X, Zap, Crown, Star, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { FREE_PLAN_LIMIT } from "@/types";
+import { FREE_PLAN_LIMIT, STARTER_PLAN_LIMIT, PRO_PLAN_LIMIT } from "@/types";
 
 export default function Pricing() {
   const { t } = useTranslation();
@@ -17,9 +17,9 @@ export default function Pricing() {
   const plan = userProfile?.plan ?? "free";
   const isPro = plan === "pro";
   const isStarter = plan === "starter";
-  const scansUsed = FREE_PLAN_LIMIT - (userProfile?.remainingScans ?? FREE_PLAN_LIMIT);
-  const totalScans = isPro ? 999 : isStarter ? 7 : FREE_PLAN_LIMIT;
-  const usagePercent = Math.min(100, ((totalScans - (userProfile?.remainingScans ?? totalScans)) / totalScans) * 100);
+  const totalScans = isPro ? PRO_PLAN_LIMIT : isStarter ? STARTER_PLAN_LIMIT : FREE_PLAN_LIMIT;
+  const remaining = userProfile?.remainingScans ?? totalScans;
+  const usagePercent = Math.min(100, ((totalScans - remaining) / totalScans) * 100);
 
   const freeFeatures = [
     { included: true,  text: t("dashPricing.free.f1") },
@@ -140,8 +140,8 @@ export default function Pricing() {
               </CardHeader>
               <CardContent className="flex-1">
                 <ul className="space-y-2.5 text-sm">
-                  {freeFeatures.map((f) => (
-                    <li key={f.text} className={`flex items-start gap-2.5 ${!f.included ? "text-muted-foreground" : ""}`}>
+                  {freeFeatures.map((f, i) => (
+                    <li key={i} className={`flex items-start gap-2.5 ${!f.included ? "text-muted-foreground" : ""}`}>
                       {f.included ? <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" /> : <X className="h-4 w-4 mt-0.5 shrink-0" />}
                       {f.text}
                     </li>
@@ -173,8 +173,8 @@ export default function Pricing() {
               </CardHeader>
               <CardContent className="flex-1">
                 <ul className="space-y-2.5 text-sm">
-                  {starterFeatures.map((f) => (
-                    <li key={f.text} className="flex items-start gap-2.5">
+                  {starterFeatures.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
                       <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                       <span>{f.text}</span>
                     </li>
@@ -218,8 +218,8 @@ export default function Pricing() {
               </CardHeader>
               <CardContent className="flex-1">
                 <ul className="space-y-2.5 text-sm">
-                  {proFeatures.map((f) => (
-                    <li key={f.text} className="flex items-start gap-2.5">
+                  {proFeatures.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
                       <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                       <span className="font-medium">{f.text}</span>
                     </li>
