@@ -236,59 +236,62 @@ export async function addScansToUser(uid: string, amount: number): Promise<void>
 }
 
 // ── Upgrade Requests ─────────────────────────────────────────────────────────
+// Stored inside users/{userId} as upgradeRequest field — no extra collection needed,
+// so existing Firestore rules (user can write own doc) already cover this.
 export async function createUpgradeRequest(
   userId: string,
   email: string,
   name: string,
   n8nSent: boolean
 ): Promise<string> {
-  const ref = await addDoc(collection(db, "upgradeRequests"), {
-    userId,
-    email,
-    name,
-    status: "pending",
-    n8nSent,
-    createdAt: serverTimestamp(),
+  await updateDoc(doc(db, "users", userId), {
+    upgradeRequest: {
+      userId,
+      email,
+      name,
+      status: "pending",
+      n8nSent,
+      createdAt: new Date().toISOString(),
+    },
   });
-  return ref.id;
+  return userId;
 }
 
 export async function getUpgradeRequests(): Promise<UpgradeRequest[]> {
-  const q = query(
-    collection(db, "upgradeRequests"),
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({
-    requestId: d.id,
-    ...(d.data() as Omit<UpgradeRequest, "requestId" | "createdAt" | "reviewedAt">),
-    createdAt:
-      d.data().createdAt instanceof Timestamp
-        ? d.data().createdAt.toDate().toISOString()
-        : d.data().createdAt ?? "",
-    reviewedAt:
-      d.data().reviewedAt instanceof Timestamp
-        ? d.data().reviewedAt.toDate().toISOString()
-        : d.data().reviewedAt,
-  }));
+  const snap = await getDocs(collection(db, "users"));
+  const results: UpgradeRequest[] = [];
+  snap.docs.forEach((d) => {
+    const data = d.data();
+    if (data.upgradeRequest) {
+      const r = data.upgradeRequest;
+      results.push({
+        requestId: d.id,
+        userId: r.userId ?? d.id,
+        email: r.email ?? data.email ?? "",
+        name: r.name ?? data.name ?? "",
+        status: r.status ?? "pending",
+        n8nSent: r.n8nSent ?? false,
+        createdAt: r.createdAt ?? "",
+        reviewedAt: r.reviewedAt,
+      });
+    }
+  });
+  results.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
+  return results;
 }
 
 export async function approveUpgradeRequest(requestId: string, userId: string): Promise<void> {
-  await Promise.all([
-    updateDoc(doc(db, "upgradeRequests", requestId), {
-      status: "approved",
-      reviewedAt: serverTimestamp(),
-    }),
-    updateDoc(doc(db, "users", userId), {
-      plan: "pro",
-    }),
-  ]);
+  await updateDoc(doc(db, "users", userId), {
+    plan: "pro",
+    "upgradeRequest.status": "approved",
+    "upgradeRequest.reviewedAt": new Date().toISOString(),
+  });
 }
 
 export async function rejectUpgradeRequest(requestId: string): Promise<void> {
-  await updateDoc(doc(db, "upgradeRequests", requestId), {
-    status: "rejected",
-    reviewedAt: serverTimestamp(),
+  await updateDoc(doc(db, "users", requestId), {
+    "upgradeRequest.status": "rejected",
+    "upgradeRequest.reviewedAt": new Date().toISOString(),
   });
 }
 
