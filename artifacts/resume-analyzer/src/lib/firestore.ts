@@ -235,6 +235,11 @@ export async function addScansToUser(uid: string, amount: number): Promise<void>
   await updateDoc(ref, { remainingScans: current + amount });
 }
 
+// ── Resume Name Lock ─────────────────────────────────────────────────────────
+export async function setResumeName(userId: string, resumeName: string): Promise<void> {
+  await updateDoc(doc(db, "users", userId), { resumeName });
+}
+
 // ── Upgrade Requests ─────────────────────────────────────────────────────────
 // Stored inside users/{userId} as upgradeRequest field — no extra collection needed,
 // so existing Firestore rules (user can write own doc) already cover this.

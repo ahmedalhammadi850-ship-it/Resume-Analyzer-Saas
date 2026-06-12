@@ -1,10 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { Send, Bot, User, Download, FileText, Loader2, RefreshCw } from "lucide-react";
+import { useLocation } from "wouter";
+import { setResumeName } from "@/lib/firestore";
+import {
+  Send, Bot, User, Download, FileText, Loader2,
+  RefreshCw, Lock, Pencil, AlertCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const N8N_WEBHOOK = "https://ahmed11ali.app.n8n.cloud/webhook-test/952cdd26-1852-4ba8-9a3c-0bd2c7e85f5e";
@@ -25,17 +32,136 @@ function generateSessionId() {
   return `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+// ── Name Entry Screen ─────────────────────────────────────────────────────────
+function NameEntryScreen({
+  onConfirm,
+  saving,
+}: {
+  onConfirm: (name: string) => void;
+  saving: boolean;
+}) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = () => {
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+
+    if (!fn) { setError("أدخل الاسم الأول"); return; }
+    if (!ln) { setError("أدخل اسم الأب"); return; }
+    if (/\s/.test(fn)) { setError("الاسم الأول كلمة واحدة فقط"); return; }
+    if (/\s/.test(ln)) { setError("اسم الأب كلمة واحدة فقط"); return; }
+
+    setError("");
+    onConfirm(`${fn} ${ln}`);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-md mx-auto text-center space-y-8 py-10">
+      {/* Icon */}
+      <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+        <FileText className="h-10 w-10 text-primary" />
+      </div>
+
+      {/* Title */}
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold">منشئ السيرة الذاتية</h1>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          أدخل اسمك الثنائي (اسمان فقط) قبل البدء.<br />
+          <span className="font-medium text-foreground">لن تتمكن من تغييره لاحقاً بدون دفع.</span>
+        </p>
+      </div>
+
+      {/* Inputs */}
+      <div className="w-full space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground text-start block">الاسم الأول</label>
+            <Input
+              placeholder="أحمد"
+              value={firstName}
+              onChange={(e) => { setFirstName(e.target.value); setError(""); }}
+              dir="rtl"
+              className="text-center text-base font-semibold h-12"
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground text-start block">اسم الأب</label>
+            <Input
+              placeholder="عبدالله"
+              value={lastName}
+              onChange={(e) => { setLastName(e.target.value); setError(""); }}
+              dir="rtl"
+              className="text-center text-base font-semibold h-12"
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            />
+          </div>
+        </div>
+
+        {/* Preview */}
+        {(firstName.trim() || lastName.trim()) && (
+          <div className="px-4 py-3 rounded-lg bg-muted/60 border text-sm font-semibold text-foreground">
+            {firstName.trim()} {lastName.trim()}
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 text-destructive text-sm">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <Button
+          className="w-full h-12 text-base font-semibold"
+          onClick={handleSubmit}
+          disabled={saving}
+        >
+          {saving ? <><Loader2 className="h-4 w-4 me-2 animate-spin" />جارٍ الحفظ...</> : <>تأكيد الاسم والبدء</>}
+        </Button>
+
+        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+          <Lock className="h-3.5 w-3.5" />
+          يُحفظ الاسم مرة واحدة فقط — لا يمكن تغييره بدون دفع
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Locked Name Badge ─────────────────────────────────────────────────────────
+function LockedNameBadge({ name, onChangeRequest }: { name: string; onChangeRequest: () => void }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 font-semibold text-sm">
+        <Lock className="h-3.5 w-3.5 text-primary" />
+        {name}
+      </Badge>
+      <button
+        onClick={onChangeRequest}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+        title="تغيير الاسم (يتطلب دفعاً)"
+      >
+        <Pencil className="h-3 w-3" />
+        تغيير
+      </button>
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────────
 export default function ResumeBuilder() {
-  const { userProfile } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "مرحباً! أنا مساعدك الذكي لإنشاء السيرة الذاتية 🎯\n\nسأساعدك خطوة بخطوة في بناء سيرة ذاتية احترافية. ابدأ بتعريف نفسك — ما اسمك الكامل؟",
-      timestamp: new Date(),
-    },
-  ]);
+  const [, navigate] = useLocation();
+
+  const [lockedName, setLockedName] = useState<string | null>(userProfile?.resumeName ?? null);
+  const [savingName, setSavingName] = useState(false);
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId] = useState(generateSessionId);
@@ -43,9 +169,47 @@ export default function ResumeBuilder() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Sync locked name from profile (after Auth loads)
+  useEffect(() => {
+    if (userProfile?.resumeName && !lockedName) {
+      setLockedName(userProfile.resumeName);
+    }
+  }, [userProfile?.resumeName]);
+
+  // Init chat once name is locked
+  useEffect(() => {
+    if (lockedName && messages.length === 0) {
+      setMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          content: `مرحباً ${lockedName}! 🎯\n\nسأساعدك خطوة بخطوة في بناء سيرتك الذاتية الاحترافية.\n\nابدأ بإخباري عن مجالك الوظيفي أو آخر وظيفة عملت بها.`,
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }, [lockedName]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleNameConfirm = async (name: string) => {
+    if (!currentUser) return;
+    setSavingName(true);
+    try {
+      await setResumeName(currentUser.uid, name);
+      setLockedName(name);
+    } catch (e: any) {
+      console.error("Failed to save resume name", e);
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleNameChangeRequest = () => {
+    navigate("/upgrade");
+  };
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -69,7 +233,7 @@ export default function ResumeBuilder() {
 
       const payload = {
         session_id: sessionId,
-        user_name: userProfile?.name ?? "",
+        user_name: lockedName ?? userProfile?.name ?? "",
         message: text,
         history: conversationHistory,
       };
@@ -80,9 +244,7 @@ export default function ResumeBuilder() {
         body: JSON.stringify({ webhook_url: N8N_WEBHOOK, ...payload }),
       });
 
-      if (!res.ok) {
-        throw new Error(`خطأ في الاتصال: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`خطأ في الاتصال: ${res.status}`);
 
       const data = await res.json();
 
@@ -90,14 +252,12 @@ export default function ResumeBuilder() {
       let fileUrl: string | undefined;
       let fileName: string | undefined;
 
-      // ── Handle binary file returned by proxy ──────────────────────────────
       if (data?.type === "file" && data?.base64) {
         const blob = base64ToBlob(data.base64, data.mimeType ?? "application/pdf");
         fileUrl = URL.createObjectURL(blob);
         fileName = data.fileName ?? "resume.pdf";
         replyText = "✅ سيرتك الذاتية جاهزة! اضغط على زر التنزيل أدناه.";
       } else {
-        // ── Handle JSON / text response ───────────────────────────────────
         const item = Array.isArray(data) ? data[0] : data;
         const inner =
           (item as any)?.output ??
@@ -119,12 +279,10 @@ export default function ResumeBuilder() {
             (obj.response as string) ??
             "";
 
-          // File URL in response
           if (obj.file_url || obj.fileUrl || obj.download_url || obj.pdf_url) {
             fileUrl = (obj.file_url ?? obj.fileUrl ?? obj.download_url ?? obj.pdf_url) as string;
             fileName = (obj.file_name ?? obj.fileName ?? "resume.pdf") as string;
           }
-          // base64 resume field
           if (obj.resume && typeof obj.resume === "string") {
             if (obj.resume.startsWith("http")) {
               fileUrl = obj.resume;
@@ -142,27 +300,29 @@ export default function ResumeBuilder() {
         }
       }
 
-      if (fileUrl) {
-        setDownloadInfo({ url: fileUrl, name: fileName ?? "resume.pdf" });
-      }
+      if (fileUrl) setDownloadInfo({ url: fileUrl, name: fileName ?? "resume.pdf" });
 
-      const assistantMsg: Message = {
-        id: `assistant_${Date.now()}`,
-        role: "assistant",
-        content: replyText,
-        timestamp: new Date(),
-        fileUrl,
-        fileName,
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant_${Date.now()}`,
+          role: "assistant",
+          content: replyText,
+          timestamp: new Date(),
+          fileUrl,
+          fileName,
+        },
+      ]);
     } catch (err: any) {
-      const errorMsg: Message = {
-        id: `error_${Date.now()}`,
-        role: "assistant",
-        content: `⚠️ حدث خطأ: ${err.message ?? "تعذّر الاتصال بـ N8N"}. تأكد أن الـ webhook نشط في N8N وأعد المحاولة.`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error_${Date.now()}`,
+          role: "assistant",
+          content: `⚠️ حدث خطأ: ${err.message ?? "تعذّر الاتصال بـ N8N"}. تأكد أن الـ webhook نشط وأعد المحاولة.`,
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
       setTimeout(() => textareaRef.current?.focus(), 100);
@@ -177,11 +337,12 @@ export default function ResumeBuilder() {
   };
 
   const resetChat = () => {
+    if (!lockedName) return;
     setMessages([
       {
         id: "welcome",
         role: "assistant",
-        content: "مرحباً! أنا مساعدك الذكي لإنشاء السيرة الذاتية 🎯\n\nسأساعدك خطوة بخطوة في بناء سيرة ذاتية احترافية. ابدأ بتعريف نفسك — ما اسمك الكامل؟",
+        content: `مرحباً ${lockedName}! 🎯\n\nسأساعدك خطوة بخطوة في بناء سيرتك الذاتية الاحترافية.\n\nابدأ بإخباري عن مجالك الوظيفي أو آخر وظيفة عملت بها.`,
         timestamp: new Date(),
       },
     ]);
@@ -189,9 +350,20 @@ export default function ResumeBuilder() {
     setInput("");
   };
 
+  // ── Render: name entry screen ─────────────────────────────────────────────
+  if (!lockedName) {
+    return (
+      <Layout>
+        <NameEntryScreen onConfirm={handleNameConfirm} saving={savingName} />
+      </Layout>
+    );
+  }
+
+  // ── Render: chat UI ───────────────────────────────────────────────────────
   return (
     <Layout>
       <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-7rem)] max-w-3xl mx-auto">
+
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b mb-4">
           <div className="flex items-center gap-3">
@@ -200,7 +372,7 @@ export default function ResumeBuilder() {
             </div>
             <div>
               <h1 className="text-lg font-bold">منشئ السيرة الذاتية</h1>
-              <p className="text-xs text-muted-foreground">مساعد ذكي لإنشاء سيرتك الذاتية</p>
+              <LockedNameBadge name={lockedName} onChangeRequest={handleNameChangeRequest} />
             </div>
           </div>
           <Button
@@ -224,12 +396,7 @@ export default function ResumeBuilder() {
                 <div className="text-xs text-green-600">{downloadInfo.name}</div>
               </div>
             </div>
-            <a
-              href={downloadInfo.url}
-              download={downloadInfo.name}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href={downloadInfo.url} download={downloadInfo.name} target="_blank" rel="noreferrer">
               <Button size="sm" className="bg-green-600 hover:bg-green-700 gap-2">
                 <Download className="h-4 w-4" />
                 تنزيل
@@ -267,11 +434,7 @@ export default function ResumeBuilder() {
               size="icon"
               className="shrink-0 h-9 w-9 rounded-lg"
             >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
           <p className="text-center text-xs text-muted-foreground mt-2">
@@ -283,39 +446,21 @@ export default function ResumeBuilder() {
   );
 }
 
+// ── Chat Bubble ────────────────────────────────────────────────────────────────
 function ChatBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
-
   return (
-    <div
-      className={cn(
-        "flex gap-3 items-start",
-        isUser ? "flex-row-reverse" : "flex-row"
-      )}
-    >
-      {/* Avatar */}
-      <div
-        className={cn(
-          "h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-1",
-          isUser
-            ? "bg-primary text-primary-foreground"
-            : "bg-secondary text-secondary-foreground"
-        )}
-      >
-        {isUser ? (
-          <User className="h-4 w-4" />
-        ) : (
-          <Bot className="h-4 w-4" />
-        )}
+    <div className={cn("flex gap-3 items-start", isUser ? "flex-row-reverse" : "flex-row")}>
+      <div className={cn(
+        "h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-1",
+        isUser ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+      )}>
+        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
       </div>
-
-      {/* Bubble */}
       <div
         className={cn(
           "max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm",
-          isUser
-            ? "bg-primary text-primary-foreground rounded-tr-sm"
-            : "bg-background border rounded-tl-sm"
+          isUser ? "bg-primary text-primary-foreground rounded-tr-sm" : "bg-background border rounded-tl-sm"
         )}
         dir="auto"
       >
@@ -337,6 +482,7 @@ function ChatBubble({ message }: { message: Message }) {
   );
 }
 
+// ── Typing Indicator ──────────────────────────────────────────────────────────
 function TypingIndicator() {
   return (
     <div className="flex gap-3 items-start">
@@ -354,6 +500,7 @@ function TypingIndicator() {
   );
 }
 
+// ── Utils ─────────────────────────────────────────────────────────────────────
 function base64ToBlob(base64: string, type: string): Blob {
   const byteChars = atob(base64);
   const byteNums = new Array(byteChars.length);

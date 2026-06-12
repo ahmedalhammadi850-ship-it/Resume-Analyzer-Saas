@@ -10,6 +10,7 @@ export interface UserProfile {
   remainingScans: number;
   role: UserRole;
   createdAt: string;
+  resumeName?: string;
 }
 
 export interface Analysis {
