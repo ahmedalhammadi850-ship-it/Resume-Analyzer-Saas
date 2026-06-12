@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import {
   getAdminStats, getAllUsers, suspendUser, deleteUser,
-  addScansToUser, getUpgradeRequests, approveUpgradeRequest, rejectUpgradeRequest
+  addScansToUser, getUpgradeRequests, approveUpgradeRequest, rejectUpgradeRequest,
+  getAppSettings, updateAppSettings,
 } from "@/lib/firestore";
-import { AdminStats, UserProfile, UpgradeRequest } from "@/types";
+import { AdminStats, UserProfile, UpgradeRequest, AppSettings } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,7 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   Users, FileText, DollarSign, TrendingUp, ShieldAlert,
-  Trash2, Ban, PlusCircle, CheckCircle2, XCircle, Clock, RefreshCw
+  Trash2, Ban, PlusCircle, CheckCircle2, XCircle, Clock, RefreshCw,
+  Settings, Lock, Unlock, Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -28,12 +30,36 @@ export default function Admin() {
   const [scanInputs, setScanInputs] = useState<Record<string, string>>({});
   const [addingScans, setAddingScans] = useState<Record<string, boolean>>({});
   const [processingRequest, setProcessingRequest] = useState<Record<string, boolean>>({});
+  const [appSettings, setAppSettings] = useState<AppSettings>({ resumeNameChangeFree: false });
+  const [savingSettings, setSavingSettings] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   useEffect(() => {
     loadData();
     loadUpgradeRequests();
+    loadAppSettings();
   }, []);
+
+  async function loadAppSettings() {
+    try {
+      const s = await getAppSettings();
+      setAppSettings(s);
+    } catch {}
+  }
+
+  async function toggleSetting(key: keyof AppSettings) {
+    const newVal = !appSettings[key];
+    setSavingSettings(prev => ({ ...prev, [key]: true }));
+    try {
+      await updateAppSettings({ [key]: newVal });
+      setAppSettings(prev => ({ ...prev, [key]: newVal }));
+      toast({ title: newVal ? "✅ تم التفعيل" : "🔒 تم التعطيل" });
+    } catch (e: any) {
+      toast({ title: "فشل حفظ الإعداد", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingSettings(prev => ({ ...prev, [key]: false }));
+    }
+  }
 
   async function loadData() {
     try {
@@ -388,42 +414,84 @@ export default function Admin() {
           </TabsContent>
 
           {/* ── System Tab ── */}
-          <TabsContent value="system" className="mt-4">
+          <TabsContent value="system" className="mt-4 space-y-4">
+
+            {/* ── Feature Toggles ── */}
+            <Card>
+              <CardHeader className="flex flex-row items-center gap-2">
+                <Settings className="h-5 w-5 text-muted-foreground" />
+                <CardTitle>إعدادات الميزات</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+
+                {/* Resume Name Change */}
+                <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                  appSettings.resumeNameChangeFree
+                    ? "border-green-400 bg-green-50/40 dark:bg-green-900/10"
+                    : "border-border bg-muted/20"
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      appSettings.resumeNameChangeFree ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"
+                    }`}>
+                      {appSettings.resumeNameChangeFree
+                        ? <Unlock className="h-4 w-4 text-green-600" />
+                        : <Lock className="h-4 w-4 text-muted-foreground" />
+                      }
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">تغيير اسم السيرة الذاتية</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {appSettings.resumeNameChangeFree
+                          ? "مجاني — يمكن لأي مستخدم تغيير اسمه بحرية"
+                          : "مدفوع — يحتاج دفع لتغيير الاسم المحفوظ"
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={appSettings.resumeNameChangeFree ? "destructive" : "default"}
+                    className="min-w-[90px] gap-1.5"
+                    disabled={savingSettings.resumeNameChangeFree}
+                    onClick={() => toggleSetting("resumeNameChangeFree")}
+                  >
+                    {savingSettings.resumeNameChangeFree ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : appSettings.resumeNameChangeFree ? (
+                      <><Lock className="h-3.5 w-3.5" />اجعله مدفوعاً</>
+                    ) : (
+                      <><Unlock className="h-3.5 w-3.5" />اجعله مجانياً</>
+                    )}
+                  </Button>
+                </div>
+
+              </CardContent>
+            </Card>
+
+            {/* ── Webhooks Status ── */}
             <Card>
               <CardHeader>
                 <CardTitle>تكاملات النظام</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-md">
-                  <div>
-                    <div className="font-medium">N8N Webhook (مطابقة الوظيفة)</div>
-                    <div className="text-sm text-muted-foreground">الطرف النشط</div>
+              <CardContent className="space-y-3">
+                {[
+                  { label: "N8N Webhook (مطابقة الوظيفة)", desc: "الطرف النشط" },
+                  { label: "N8N Webhook (مراجعة شاملة)", desc: "الطرف النشط" },
+                  { label: "N8N Webhook (طلبات الترقية)", desc: "استقبال صور الحوالات" },
+                  { label: "Firebase Storage", desc: "رفع PDF/DOCX" },
+                ].map(({ label, desc }) => (
+                  <div key={label} className="flex items-center justify-between p-4 border rounded-md">
+                    <div>
+                      <div className="font-medium text-sm">{label}</div>
+                      <div className="text-xs text-muted-foreground">{desc}</div>
+                    </div>
+                    <Badge className="bg-green-500">يعمل</Badge>
                   </div>
-                  <Badge className="bg-green-500">يعمل</Badge>
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-md">
-                  <div>
-                    <div className="font-medium">N8N Webhook (مراجعة شاملة)</div>
-                    <div className="text-sm text-muted-foreground">الطرف النشط</div>
-                  </div>
-                  <Badge className="bg-green-500">يعمل</Badge>
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-md">
-                  <div>
-                    <div className="font-medium">N8N Webhook (طلبات الترقية)</div>
-                    <div className="text-sm text-muted-foreground">استقبال صور الحوالات</div>
-                  </div>
-                  <Badge className="bg-green-500">يعمل</Badge>
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-md">
-                  <div>
-                    <div className="font-medium">Firebase Storage</div>
-                    <div className="text-sm text-muted-foreground">رفع PDF/DOCX</div>
-                  </div>
-                  <Badge className="bg-green-500">يعمل</Badge>
-                </div>
+                ))}
               </CardContent>
             </Card>
+
           </TabsContent>
         </Tabs>
       </div>

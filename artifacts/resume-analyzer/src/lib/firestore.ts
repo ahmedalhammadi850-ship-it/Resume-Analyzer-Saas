@@ -301,6 +301,26 @@ export async function rejectUpgradeRequest(requestId: string): Promise<void> {
   });
 }
 
+// ── App Settings ─────────────────────────────────────────────────────────────
+const SETTINGS_DOC = doc(db, "appSettings", "global");
+
+export async function getAppSettings(): Promise<AppSettings> {
+  const snap = await getDoc(SETTINGS_DOC);
+  if (snap.exists()) return snap.data() as AppSettings;
+  // defaults
+  return { resumeNameChangeFree: false };
+}
+
+export async function updateAppSettings(patch: Partial<AppSettings>): Promise<void> {
+  const snap = await getDoc(SETTINGS_DOC);
+  if (snap.exists()) {
+    await updateDoc(SETTINGS_DOC, patch);
+  } else {
+    const { setDoc } = await import("firebase/firestore");
+    await setDoc(SETTINGS_DOC, { resumeNameChangeFree: false, ...patch });
+  }
+}
+
 export async function getAdminStats(): Promise<AdminStats> {
   const [usersSnap, analysesSnap] = await Promise.all([
     getDocs(collection(db, "users")),

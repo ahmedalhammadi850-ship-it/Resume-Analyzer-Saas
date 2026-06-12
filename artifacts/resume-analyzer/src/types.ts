@@ -52,6 +52,10 @@ export interface SystemSettings {
   };
 }
 
+export interface AppSettings {
+  resumeNameChangeFree: boolean;
+}
+
 export interface AdminStats {
   totalUsers: number;
   totalAnalyses: number;
