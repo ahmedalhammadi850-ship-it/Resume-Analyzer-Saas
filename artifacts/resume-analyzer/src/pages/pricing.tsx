@@ -162,7 +162,7 @@ export default function Pricing() {
                 <CardTitle className="text-2xl text-primary">{t("pricing.proPlan")}</CardTitle>
                 <CardDescription>{t("pricing.proDesc")}</CardDescription>
                 <div className="mt-3">
-                  <span className="text-4xl font-black">$19</span>
+                  <span className="text-4xl font-black">{t("pricing.proPrice")}</span>
                   <span className="text-muted-foreground text-sm ms-1">{t("pricing.perMonth")}</span>
                 </div>
               </CardHeader>
