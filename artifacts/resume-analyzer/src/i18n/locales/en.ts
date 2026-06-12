@@ -411,6 +411,28 @@ const en = {
       actions: "Actions",
     },
 
+    // Upgrade page
+    upgrade: {
+      title: "Upgrade to Pro",
+      subtitle: "Follow the steps below to complete your upgrade and unlock all Pro features.",
+      stepsTitle: "Upgrade Steps",
+      step1: "Transfer the amount via bank transfer or e-wallet",
+      step2: "Take a clear photo of the transfer receipt",
+      step3: "Upload the photo below and we'll review it within minutes",
+      bankDetailsTitle: "Transfer Details",
+      bankLabel: "Bank",
+      beneficiaryLabel: "Beneficiary Name",
+      accountLabel: "Account Number",
+      uploadTitle: "Upload Transfer Receipt",
+      dragHere: "Drag your receipt image here",
+      orClick: "or click to choose a file",
+      maxSize: "up to 10MB",
+      submitBtn: "Submit for Review",
+      successTitle: "Submitted Successfully!",
+      successDesc: "We received your transfer receipt and will review it shortly. Your Pro account will be activated upon confirmation.",
+      reviewBadge: "Under Review — within minutes",
+    },
+
     // Common
     common: {
       loading: "Loading...",

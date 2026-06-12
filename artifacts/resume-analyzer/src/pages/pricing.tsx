@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { FREE_PLAN_LIMIT } from "@/types";
 
 export default function Pricing() {
   const { t } = useTranslation();
+  const [, navigate] = useLocation();
   const { userProfile } = useAuth();
 
   const isPro = userProfile?.plan === "pro";
@@ -65,7 +67,7 @@ export default function Pricing() {
                 </div>
               </div>
               {!isPro && (
-                <Button size="lg" className="shrink-0">
+                <Button size="lg" className="shrink-0" onClick={() => navigate("/upgrade")}>
                   <Crown className="h-4 w-4 me-2" />
                   {t("dashPricing.upgradeBtn")}
                 </Button>
@@ -175,7 +177,11 @@ export default function Pricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full h-11 text-base font-semibold" disabled={isPro}>
+                <Button
+                  className="w-full h-11 text-base font-semibold"
+                  disabled={isPro}
+                  onClick={() => !isPro && navigate("/upgrade")}
+                >
                   {isPro ? t("dashPricing.currentPlanBtn") : t("dashPricing.upgradeBtn")}
                 </Button>
               </CardFooter>

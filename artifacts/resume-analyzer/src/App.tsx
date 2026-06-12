@@ -22,6 +22,7 @@ import About from "@/pages/about";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
 import ResumeBuilder from "@/pages/resume-builder";
+import Upgrade from "@/pages/upgrade";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,10 @@ function Router() {
       
       <Route path="/resume-builder">
         <ProtectedRoute><ResumeBuilder /></ProtectedRoute>
+      </Route>
+
+      <Route path="/upgrade">
+        <ProtectedRoute><Upgrade /></ProtectedRoute>
       </Route>
 
       {/* Admin Route */}
