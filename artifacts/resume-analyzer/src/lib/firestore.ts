@@ -21,6 +21,7 @@ import {
   AnalysisType,
   UserProfile,
   AdminStats,
+  UpgradeRequest,
   N8N_WEBHOOK_JD,
   N8N_WEBHOOK_GENERAL,
 } from "@/types";
@@ -232,6 +233,63 @@ export async function addScansToUser(uid: string, amount: number): Promise<void>
   const profile = snap.data() as UserProfile;
   const current = profile.remainingScans ?? 0;
   await updateDoc(ref, { remainingScans: current + amount });
+}
+
+// ── Upgrade Requests ─────────────────────────────────────────────────────────
+export async function createUpgradeRequest(
+  userId: string,
+  email: string,
+  name: string,
+  n8nSent: boolean
+): Promise<string> {
+  const ref = await addDoc(collection(db, "upgradeRequests"), {
+    userId,
+    email,
+    name,
+    status: "pending",
+    n8nSent,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export async function getUpgradeRequests(): Promise<UpgradeRequest[]> {
+  const q = query(
+    collection(db, "upgradeRequests"),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({
+    requestId: d.id,
+    ...(d.data() as Omit<UpgradeRequest, "requestId" | "createdAt" | "reviewedAt">),
+    createdAt:
+      d.data().createdAt instanceof Timestamp
+        ? d.data().createdAt.toDate().toISOString()
+        : d.data().createdAt ?? "",
+    reviewedAt:
+      d.data().reviewedAt instanceof Timestamp
+        ? d.data().reviewedAt.toDate().toISOString()
+        : d.data().reviewedAt,
+  }));
+}
+
+export async function approveUpgradeRequest(requestId: string, userId: string): Promise<void> {
+  await Promise.all([
+    updateDoc(doc(db, "upgradeRequests", requestId), {
+      status: "approved",
+      reviewedAt: serverTimestamp(),
+    }),
+    updateDoc(doc(db, "users", userId), {
+      plan: "pro",
+    }),
+  ]);
+}
+
+export async function rejectUpgradeRequest(requestId: string): Promise<void> {
+  await updateDoc(doc(db, "upgradeRequests", requestId), {
+    status: "rejected",
+    reviewedAt: serverTimestamp(),
+  });
 }
 
 export async function getAdminStats(): Promise<AdminStats> {

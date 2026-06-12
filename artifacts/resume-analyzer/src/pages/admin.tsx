@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { getAdminStats, getAllUsers, suspendUser, deleteUser, addScansToUser } from "@/lib/firestore";
-import { AdminStats, UserProfile } from "@/types";
+import {
+  getAdminStats, getAllUsers, suspendUser, deleteUser,
+  addScansToUser, getUpgradeRequests, approveUpgradeRequest, rejectUpgradeRequest
+} from "@/lib/firestore";
+import { AdminStats, UserProfile, UpgradeRequest } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,34 +13,50 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Users, FileText, DollarSign, TrendingUp, ShieldAlert, Trash2, Ban, PlusCircle } from "lucide-react";
+import {
+  Users, FileText, DollarSign, TrendingUp, ShieldAlert,
+  Trash2, Ban, PlusCircle, CheckCircle2, XCircle, Clock, RefreshCw
+} from "lucide-react";
 import { format } from "date-fns";
 
 export default function Admin() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [upgradeRequests, setUpgradeRequests] = useState<UpgradeRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(true);
   const [scanInputs, setScanInputs] = useState<Record<string, string>>({});
   const [addingScans, setAddingScans] = useState<Record<string, boolean>>({});
+  const [processingRequest, setProcessingRequest] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   useEffect(() => {
     loadData();
+    loadUpgradeRequests();
   }, []);
 
   async function loadData() {
     try {
-      const [statsData, usersData] = await Promise.all([
-        getAdminStats(),
-        getAllUsers()
-      ]);
+      const [statsData, usersData] = await Promise.all([getAdminStats(), getAllUsers()]);
       setStats(statsData);
       setUsers(usersData);
     } catch (error) {
       console.error("Admin load error", error);
-      toast({ title: "Failed to load admin data", variant: "destructive" });
+      toast({ title: "فشل تحميل بيانات الإدارة", variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function loadUpgradeRequests() {
+    setIsLoadingRequests(true);
+    try {
+      const data = await getUpgradeRequests();
+      setUpgradeRequests(data);
+    } catch (error) {
+      console.error("Failed to load upgrade requests", error);
+    } finally {
+      setIsLoadingRequests(false);
     }
   }
 
@@ -73,6 +92,47 @@ export default function Admin() {
     } finally {
       setAddingScans(prev => ({ ...prev, [uid]: false }));
     }
+  };
+
+  const handleApprove = async (req: UpgradeRequest) => {
+    setProcessingRequest(prev => ({ ...prev, [req.requestId]: true }));
+    try {
+      await approveUpgradeRequest(req.requestId, req.userId);
+      setUpgradeRequests(prev =>
+        prev.map(r => r.requestId === req.requestId ? { ...r, status: "approved" } : r)
+      );
+      toast({ title: `✅ تمت الموافقة على ترقية ${req.name}` });
+      await loadData();
+    } catch (e: any) {
+      toast({ title: "فشلت الموافقة", description: e.message, variant: "destructive" });
+    } finally {
+      setProcessingRequest(prev => ({ ...prev, [req.requestId]: false }));
+    }
+  };
+
+  const handleReject = async (req: UpgradeRequest) => {
+    setProcessingRequest(prev => ({ ...prev, [req.requestId]: true }));
+    try {
+      await rejectUpgradeRequest(req.requestId);
+      setUpgradeRequests(prev =>
+        prev.map(r => r.requestId === req.requestId ? { ...r, status: "rejected" } : r)
+      );
+      toast({ title: `❌ تم رفض طلب ترقية ${req.name}` });
+    } catch (e: any) {
+      toast({ title: "فشل الرفض", description: e.message, variant: "destructive" });
+    } finally {
+      setProcessingRequest(prev => ({ ...prev, [req.requestId]: false }));
+    }
+  };
+
+  const pendingCount = upgradeRequests.filter(r => r.status === "pending").length;
+
+  const statusBadge = (status: UpgradeRequest["status"]) => {
+    if (status === "pending")
+      return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />قيد المراجعة</Badge>;
+    if (status === "approved")
+      return <Badge className="bg-green-600 gap-1"><CheckCircle2 className="h-3 w-3" />مقبول</Badge>;
+    return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />مرفوض</Badge>;
   };
 
   return (
@@ -131,12 +191,108 @@ export default function Admin() {
         </div>
 
         {/* TABS */}
-        <Tabs defaultValue="users" className="w-full">
+        <Tabs defaultValue="upgrades" className="w-full">
           <TabsList>
+            <TabsTrigger value="upgrades" className="gap-2">
+              طلبات الترقية
+              {pendingCount > 0 && (
+                <span className="h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-bold">
+                  {pendingCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="users">إدارة المستخدمين</TabsTrigger>
             <TabsTrigger value="system">حالة النظام</TabsTrigger>
           </TabsList>
 
+          {/* ── Upgrade Requests Tab ── */}
+          <TabsContent value="upgrades" className="mt-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>طلبات الترقية إلى Pro</CardTitle>
+                <Button variant="outline" size="sm" onClick={loadUpgradeRequests} disabled={isLoadingRequests}>
+                  <RefreshCw className={`h-4 w-4 me-1 ${isLoadingRequests ? "animate-spin" : ""}`} />
+                  تحديث
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoadingRequests ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+                  </div>
+                ) : upgradeRequests.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">لا توجد طلبات ترقية بعد</p>
+                  </div>
+                ) : (
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>الاسم</TableHead>
+                          <TableHead>البريد الإلكتروني</TableHead>
+                          <TableHead>الحالة</TableHead>
+                          <TableHead>n8n</TableHead>
+                          <TableHead>تاريخ الطلب</TableHead>
+                          <TableHead className="text-center">الإجراءات</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {upgradeRequests.map((req) => (
+                          <TableRow key={req.requestId}>
+                            <TableCell className="font-medium">{req.name || "—"}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{req.email}</TableCell>
+                            <TableCell>{statusBadge(req.status)}</TableCell>
+                            <TableCell>
+                              {req.n8nSent
+                                ? <Badge variant="outline" className="text-green-600 border-green-300 text-xs">أُرسل ✓</Badge>
+                                : <Badge variant="outline" className="text-muted-foreground text-xs">لم يُرسل</Badge>
+                              }
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {req.createdAt ? format(new Date(req.createdAt), "MMM d, yyyy – HH:mm") : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {req.status === "pending" ? (
+                                <div className="flex justify-center gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 h-8 px-3 text-xs gap-1"
+                                    disabled={processingRequest[req.requestId]}
+                                    onClick={() => handleApprove(req)}
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    موافقة
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    className="h-8 px-3 text-xs gap-1"
+                                    disabled={processingRequest[req.requestId]}
+                                    onClick={() => handleReject(req)}
+                                  >
+                                    <XCircle className="h-3.5 w-3.5" />
+                                    رفض
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="text-center text-xs text-muted-foreground">
+                                  {req.reviewedAt ? format(new Date(req.reviewedAt), "MMM d") : "—"}
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Users Tab ── */}
           <TabsContent value="users" className="mt-4">
             <Card>
               <CardHeader>
@@ -231,6 +387,7 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
+          {/* ── System Tab ── */}
           <TabsContent value="system" className="mt-4">
             <Card>
               <CardHeader>
@@ -248,6 +405,13 @@ export default function Admin() {
                   <div>
                     <div className="font-medium">N8N Webhook (مراجعة شاملة)</div>
                     <div className="text-sm text-muted-foreground">الطرف النشط</div>
+                  </div>
+                  <Badge className="bg-green-500">يعمل</Badge>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-md">
+                  <div>
+                    <div className="font-medium">N8N Webhook (طلبات الترقية)</div>
+                    <div className="text-sm text-muted-foreground">استقبال صور الحوالات</div>
                   </div>
                   <Badge className="bg-green-500">يعمل</Badge>
                 </div>

@@ -13,10 +13,13 @@ import {
   Building2,
   User,
   Hash,
-  ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
+import { createUpgradeRequest } from "@/lib/firestore";
+import { N8N_WEBHOOK_UPGRADE } from "@/types";
 
 const BANK_INFO = {
   bank: "بنك التضامن — Tadhamon Bank",
@@ -48,25 +51,19 @@ function CopyButton({ text }: { text: string }) {
 
 export default function Upgrade() {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const { currentUser, userProfile } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const steps = [
-    {
-      num: "١",
-      text: t("upgrade.step1"),
-    },
-    {
-      num: "٢",
-      text: t("upgrade.step2"),
-    },
-    {
-      num: "٣",
-      text: t("upgrade.step3"),
-    },
+    { num: "١", text: t("upgrade.step1") },
+    { num: "٢", text: t("upgrade.step2") },
+    { num: "٣", text: t("upgrade.step3") },
   ];
 
   const bankFields = [
@@ -96,9 +93,42 @@ export default function Upgrade() {
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  function handleSubmit() {
-    if (!file) return;
-    setSubmitted(true);
+  async function handleSubmit() {
+    if (!file || !currentUser) return;
+    setLoading(true);
+
+    let n8nSent = false;
+
+    try {
+      const form = new FormData();
+      form.append("receipt_image", file);
+      form.append("user_id", currentUser.uid);
+      form.append("user_email", currentUser.email ?? "");
+      form.append("user_name", userProfile?.name ?? currentUser.displayName ?? "");
+
+      const res = await fetch(N8N_WEBHOOK_UPGRADE, { method: "POST", body: form });
+      if (res.ok) n8nSent = true;
+    } catch {
+      // n8n unreachable — still save to Firestore
+    }
+
+    try {
+      await createUpgradeRequest(
+        currentUser.uid,
+        currentUser.email ?? "",
+        userProfile?.name ?? currentUser.displayName ?? "",
+        n8nSent
+      );
+      setSubmitted(true);
+    } catch (err: any) {
+      toast({
+        title: t("upgrade.submitError"),
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (submitted) {
@@ -143,11 +173,6 @@ export default function Upgrade() {
                     {s.num}
                   </div>
                   <div className="flex-1 pt-1.5 text-sm">{s.text}</div>
-                  {i < steps.length - 1 && (
-                    <div className="hidden sm:flex items-center text-muted-foreground/30 pt-1.5">
-                      <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-                    </div>
-                  )}
                 </li>
               ))}
             </ol>
@@ -155,12 +180,12 @@ export default function Upgrade() {
         </Card>
 
         {/* Bank Details */}
-        <Card className="border-primary/30 bg-primary/3">
+        <Card className="border-primary/30">
           <CardContent className="p-6 space-y-4">
             <h2 className="font-semibold text-lg">{t("upgrade.bankDetailsTitle")}</h2>
             <div className="space-y-3">
               {bankFields.map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-center gap-3 p-3 rounded-lg bg-background border">
+                <div key={label} className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
                   <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Icon className="h-4 w-4 text-primary" />
                   </div>
@@ -235,11 +260,14 @@ export default function Upgrade() {
 
             <Button
               className="w-full h-11 text-base font-semibold"
-              disabled={!file}
+              disabled={!file || loading}
               onClick={handleSubmit}
             >
-              <Upload className="h-4 w-4 me-2" />
-              {t("upgrade.submitBtn")}
+              {loading ? (
+                <><Loader2 className="h-4 w-4 me-2 animate-spin" />{t("upgrade.submitting")}</>
+              ) : (
+                <><Upload className="h-4 w-4 me-2" />{t("upgrade.submitBtn")}</>
+              )}
             </Button>
           </CardContent>
         </Card>

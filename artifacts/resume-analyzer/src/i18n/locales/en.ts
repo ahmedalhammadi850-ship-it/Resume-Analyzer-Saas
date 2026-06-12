@@ -428,6 +428,8 @@ const en = {
       orClick: "or click to choose a file",
       maxSize: "up to 10MB",
       submitBtn: "Submit for Review",
+      submitting: "Submitting...",
+      submitError: "Submission Failed",
       successTitle: "Submitted Successfully!",
       successDesc: "We received your transfer receipt and will review it shortly. Your Pro account will be activated upon confirmation.",
       reviewBadge: "Under Review — within minutes",

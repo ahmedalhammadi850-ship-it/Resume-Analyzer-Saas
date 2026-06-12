@@ -428,6 +428,8 @@ const ar = {
       orClick: "أو اضغط لاختيار ملف",
       maxSize: "حتى 10MB",
       submitBtn: "إرسال للمراجعة",
+      submitting: "جارٍ الإرسال...",
+      submitError: "فشل الإرسال",
       successTitle: "تم الإرسال بنجاح!",
       successDesc: "تلقّينا صورة الحوالة وسنراجعها قريباً. سيتم تفعيل حسابك Pro فور التأكيد.",
       reviewBadge: "قيد المراجعة — خلال دقائق",
