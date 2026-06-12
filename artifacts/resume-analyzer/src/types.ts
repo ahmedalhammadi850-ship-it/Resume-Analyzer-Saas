@@ -1,5 +1,5 @@
 export type UserRole = "user" | "admin";
-export type PlanType = "free" | "pro";
+export type PlanType = "free" | "starter" | "pro";
 export type AnalysisType = "jd_match" | "general_review";
 
 export interface UserProfile {

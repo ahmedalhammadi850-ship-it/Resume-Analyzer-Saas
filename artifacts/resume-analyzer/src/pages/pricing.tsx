@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Check, X, Zap, Crown, RefreshCw } from "lucide-react";
+import { Check, X, Zap, Crown, Star, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { FREE_PLAN_LIMIT } from "@/types";
 
@@ -14,26 +14,38 @@ export default function Pricing() {
   const [, navigate] = useLocation();
   const { userProfile } = useAuth();
 
-  const isPro = userProfile?.plan === "pro";
+  const plan = userProfile?.plan ?? "free";
+  const isPro = plan === "pro";
+  const isStarter = plan === "starter";
   const scansUsed = FREE_PLAN_LIMIT - (userProfile?.remainingScans ?? FREE_PLAN_LIMIT);
-  const usagePercent = Math.min(100, (scansUsed / FREE_PLAN_LIMIT) * 100);
+  const totalScans = isPro ? 999 : isStarter ? 7 : FREE_PLAN_LIMIT;
+  const usagePercent = Math.min(100, ((totalScans - (userProfile?.remainingScans ?? totalScans)) / totalScans) * 100);
 
   const freeFeatures = [
     { included: true,  text: t("dashPricing.free.f1") },
     { included: true,  text: t("dashPricing.free.f2") },
     { included: true,  text: t("dashPricing.free.f3") },
-    { included: false, text: t("dashPricing.free.f4") },
+    { included: true,  text: t("dashPricing.free.f4") },
     { included: false, text: t("dashPricing.free.f5") },
     { included: false, text: t("dashPricing.free.f6") },
   ];
 
+  const starterFeatures = [
+    { included: true,  text: t("dashPricing.starter.f1") },
+    { included: true,  text: t("dashPricing.starter.f2") },
+    { included: true,  text: t("dashPricing.starter.f3") },
+    { included: true,  text: t("dashPricing.starter.f4") },
+    { included: true,  text: t("dashPricing.starter.f5") },
+    { included: true,  text: t("dashPricing.starter.f6") },
+  ];
+
   const proFeatures = [
-    { included: true, text: t("dashPricing.pro.f1") },
-    { included: true, text: t("dashPricing.pro.f2") },
-    { included: true, text: t("dashPricing.pro.f3") },
-    { included: true, text: t("dashPricing.pro.f4") },
-    { included: true, text: t("dashPricing.pro.f5") },
-    { included: true, text: t("dashPricing.pro.f6") },
+    { text: t("dashPricing.pro.f1") },
+    { text: t("dashPricing.pro.f2") },
+    { text: t("dashPricing.pro.f3") },
+    { text: t("dashPricing.pro.f4") },
+    { text: t("dashPricing.pro.f5") },
+    { text: t("dashPricing.pro.f6") },
   ];
 
   return (
@@ -47,50 +59,52 @@ export default function Pricing() {
         </div>
 
         {/* Current Plan Card */}
-        <Card className={`border-2 ${isPro ? "border-primary bg-primary/5" : "border-border"}`}>
+        <Card className={`border-2 ${isPro ? "border-primary bg-primary/5" : isStarter ? "border-amber-400 bg-amber-50/30 dark:bg-amber-900/10" : "border-border"}`}>
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isPro ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-                  {isPro ? <Crown className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isPro ? "bg-primary text-primary-foreground" : isStarter ? "bg-amber-400 text-white" : "bg-secondary text-secondary-foreground"}`}>
+                  {isPro ? <Crown className="h-6 w-6" /> : isStarter ? <Star className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-bold">{t("dashPricing.currentPlanLabel")}</h2>
                     <Badge variant={isPro ? "default" : "secondary"} className="uppercase text-[10px] tracking-wider">
-                      {isPro ? t("common.pro") : t("common.free")}
+                      {isPro ? t("pricing.proPlan") : isStarter ? t("pricing.starterPlan") : t("pricing.freePlan")}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    {isPro ? t("dashPricing.proActiveDesc") : t("dashPricing.freeActiveDesc")}
+                    {isPro ? t("dashPricing.proActiveDesc") : isStarter ? t("dashPricing.starterActiveDesc") : t("dashPricing.freeActiveDesc")}
                   </p>
                 </div>
               </div>
               {!isPro && (
-                <Button size="lg" className="shrink-0" onClick={() => navigate("/upgrade")}>
-                  <Crown className="h-4 w-4 me-2" />
-                  {t("dashPricing.upgradeBtn")}
-                </Button>
+                <div className="flex gap-2 shrink-0 flex-wrap">
+                  {!isStarter && (
+                    <Button size="lg" variant="outline" onClick={() => navigate("/upgrade")}>
+                      <Star className="h-4 w-4 me-2" />
+                      {t("dashPricing.upgradeStarterBtn")}
+                    </Button>
+                  )}
+                  <Button size="lg" onClick={() => navigate("/upgrade")}>
+                    <Crown className="h-4 w-4 me-2" />
+                    {t("dashPricing.upgradeBtn")}
+                  </Button>
+                </div>
               )}
             </div>
 
-            {/* Usage bar — free users only */}
             {!isPro && (
               <div className="mt-6 pt-5 border-t space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">{t("dashPricing.monthlyUsage")}</span>
                   <span className="text-muted-foreground">
-                    {scansUsed} / {FREE_PLAN_LIMIT} {t("dashPricing.scansUsed")}
+                    {userProfile?.remainingScans ?? 0} {t("dashPricing.scansRemaining")}
                   </span>
                 </div>
                 <Progress value={usagePercent} className={`h-2.5 ${usagePercent >= 100 ? "[&>div]:bg-destructive" : usagePercent >= 70 ? "[&>div]:bg-amber-500" : ""}`} />
-                {userProfile?.remainingScans === 0 && (
+                {(userProfile?.remainingScans ?? 0) === 0 && (
                   <p className="text-sm text-destructive font-medium">{t("dashPricing.noScansLeft")}</p>
-                )}
-                {(userProfile?.remainingScans ?? 0) > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {userProfile?.remainingScans} {t("dashPricing.scansRemaining")}
-                  </p>
                 )}
               </div>
             )}
@@ -104,33 +118,31 @@ export default function Pricing() {
           </CardContent>
         </Card>
 
-        {/* Plan Cards */}
+        {/* Plan Cards — 3 columns */}
         <div>
           <h2 className="text-xl font-semibold mb-6">{t("dashPricing.comparePlans")}</h2>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+          <div className="grid md:grid-cols-3 gap-5 max-w-5xl">
 
             {/* Free */}
-            <Card className={`flex flex-col ${!isPro ? "ring-2 ring-primary" : "opacity-80"}`}>
-              {!isPro && (
+            <Card className={`flex flex-col ${plan === "free" ? "ring-2 ring-primary" : "opacity-80"}`}>
+              {plan === "free" && (
                 <div className="bg-primary text-primary-foreground text-center text-xs font-semibold py-1.5 rounded-t-lg tracking-wider">
                   {t("dashPricing.activePlan")}
                 </div>
               )}
               <CardHeader>
-                <CardTitle className="text-2xl">{t("pricing.freePlan")}</CardTitle>
+                <CardTitle className="text-xl">{t("pricing.freePlan")}</CardTitle>
                 <CardDescription>{t("pricing.freeDesc")}</CardDescription>
                 <div className="mt-3">
                   <span className="text-4xl font-black">$0</span>
-                  <span className="text-muted-foreground text-sm ms-1">{t("dashPricing.forever")}</span>
+                  <span className="text-muted-foreground text-sm ms-1">{t("pubPricing.forever")}</span>
                 </div>
               </CardHeader>
               <CardContent className="flex-1">
-                <ul className="space-y-3 text-sm">
+                <ul className="space-y-2.5 text-sm">
                   {freeFeatures.map((f) => (
-                    <li key={f.text} className={`flex items-start gap-3 ${!f.included ? "text-muted-foreground" : ""}`}>
-                      {f.included
-                        ? <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                        : <X className="h-4 w-4 mt-0.5 shrink-0" />}
+                    <li key={f.text} className={`flex items-start gap-2.5 ${!f.included ? "text-muted-foreground" : ""}`}>
+                      {f.included ? <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" /> : <X className="h-4 w-4 mt-0.5 shrink-0" />}
                       {f.text}
                     </li>
                   ))}
@@ -138,7 +150,45 @@ export default function Pricing() {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" disabled>
-                  {!isPro ? t("dashPricing.currentPlanBtn") : t("dashPricing.downgradeBtn")}
+                  {plan === "free" ? t("dashPricing.currentPlanBtn") : t("dashPricing.downgradeBtn")}
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Starter */}
+            <Card className={`flex flex-col relative overflow-hidden border-amber-400 ${plan === "starter" ? "ring-2 ring-amber-400 shadow-lg" : ""}`}>
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-transparent dark:from-amber-900/10 pointer-events-none" />
+              {plan === "starter" && (
+                <div className="bg-amber-400 text-white text-center text-xs font-semibold py-1.5 rounded-t-lg tracking-wider">
+                  {t("dashPricing.activePlan")}
+                </div>
+              )}
+              <CardHeader>
+                <CardTitle className="text-xl text-amber-600 dark:text-amber-400">{t("pricing.starterPlan")}</CardTitle>
+                <CardDescription>{t("pricing.starterDesc")}</CardDescription>
+                <div className="mt-3">
+                  <span className="text-4xl font-black">$3</span>
+                  <span className="text-muted-foreground text-sm ms-1">{t("pricing.oneTime")}</span>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <ul className="space-y-2.5 text-sm">
+                  {starterFeatures.map((f) => (
+                    <li key={f.text} className="flex items-start gap-2.5">
+                      <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                      <span>{f.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  variant="outline"
+                  className="w-full border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                  disabled={isStarter || isPro}
+                  onClick={() => navigate("/upgrade")}
+                >
+                  {isStarter ? t("dashPricing.currentPlanBtn") : t("pricing.upgradeStarter")}
                 </Button>
               </CardFooter>
             </Card>
@@ -159,17 +209,17 @@ export default function Pricing() {
                 </div>
               )}
               <CardHeader>
-                <CardTitle className="text-2xl text-primary">{t("pricing.proPlan")}</CardTitle>
+                <CardTitle className="text-xl text-primary">{t("pricing.proPlan")}</CardTitle>
                 <CardDescription>{t("pricing.proDesc")}</CardDescription>
                 <div className="mt-3">
-                  <span className="text-4xl font-black">{t("pricing.proPrice")}</span>
+                  <span className="text-4xl font-black">$10</span>
                   <span className="text-muted-foreground text-sm ms-1">{t("pricing.perMonth")}</span>
                 </div>
               </CardHeader>
               <CardContent className="flex-1">
-                <ul className="space-y-3 text-sm">
+                <ul className="space-y-2.5 text-sm">
                   {proFeatures.map((f) => (
-                    <li key={f.text} className="flex items-start gap-3">
+                    <li key={f.text} className="flex items-start gap-2.5">
                       <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                       <span className="font-medium">{f.text}</span>
                     </li>
@@ -195,22 +245,10 @@ export default function Pricing() {
           <CardContent className="p-6">
             <h3 className="font-semibold mb-4">{t("dashPricing.faqTitle")}</h3>
             <div className="grid sm:grid-cols-2 gap-x-10 gap-y-4 text-sm text-muted-foreground">
-              <div>
-                <p className="font-medium text-foreground mb-1">{t("dashPricing.faq1Q")}</p>
-                <p>{t("dashPricing.faq1A")}</p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground mb-1">{t("dashPricing.faq2Q")}</p>
-                <p>{t("dashPricing.faq2A")}</p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground mb-1">{t("dashPricing.faq3Q")}</p>
-                <p>{t("dashPricing.faq3A")}</p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground mb-1">{t("dashPricing.faq4Q")}</p>
-                <p>{t("dashPricing.faq4A")}</p>
-              </div>
+              <div><p className="font-medium text-foreground mb-1">{t("dashPricing.faq1Q")}</p><p>{t("dashPricing.faq1A")}</p></div>
+              <div><p className="font-medium text-foreground mb-1">{t("dashPricing.faq2Q")}</p><p>{t("dashPricing.faq2A")}</p></div>
+              <div><p className="font-medium text-foreground mb-1">{t("dashPricing.faq3Q")}</p><p>{t("dashPricing.faq3A")}</p></div>
+              <div><p className="font-medium text-foreground mb-1">{t("dashPricing.faq4Q")}</p><p>{t("dashPricing.faq4A")}</p></div>
             </div>
           </CardContent>
         </Card>
