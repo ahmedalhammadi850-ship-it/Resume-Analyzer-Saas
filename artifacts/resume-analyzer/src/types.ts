@@ -86,6 +86,9 @@ export const N8N_WEBHOOK_GENERAL =
 export const N8N_WEBHOOK_UPGRADE =
   import.meta.env.VITE_N8N_WEBHOOK_UPGRADE ||
   "https://ahmed11ali.app.n8n.cloud/webhook-test/2f6b38a8-cde2-4029-9b59-a3b6d1a33eb4";
+export const N8N_WEBHOOK_CREATE_CV =
+  import.meta.env.VITE_N8N_WEBHOOK_CREATE_CV ||
+  "https://ahmed11ali.app.n8n.cloud/webhook-test/952cdd26-1852-4ba8-9a3c-0bd2c7e85f5e";
 export const FREE_PLAN_LIMIT = 1;
 export const STARTER_PLAN_LIMIT = 7;
 export const PRO_PLAN_LIMIT = 25;
