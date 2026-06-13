@@ -2,13 +2,6 @@ import { Router } from "express";
 
 const router = Router();
 
-type FetchResponse = {
-  headers: { get(name: string): string | null };
-  arrayBuffer(): Promise<ArrayBuffer>;
-  text(): Promise<string>;
-  status: number;
-};
-
 router.post("/n8n-proxy", async (req, res) => {
   const { webhook_url, ...body } = req.body as { webhook_url: string; [key: string]: unknown };
 
@@ -22,11 +15,10 @@ router.post("/n8n-proxy", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    }) as unknown as FetchResponse;
+    });
 
     const contentType = n8nRes.headers.get("content-type") ?? "";
 
-    // Binary file (PDF, docx, etc.) — convert to base64 and return with metadata
     const isBinary =
       contentType.includes("application/pdf") ||
       contentType.includes("application/vnd") ||
@@ -48,10 +40,8 @@ router.post("/n8n-proxy", async (req, res) => {
       return;
     }
 
-    // Text / JSON response
     const rawText = await n8nRes.text();
 
-    // If the raw text starts with %PDF (PDF sent as plain text/binary mistakenly)
     if (rawText.startsWith("%PDF") || rawText.includes("%%EOF")) {
       const base64 = Buffer.from(rawText, "binary").toString("base64");
       res.status(200).json({
@@ -63,16 +53,14 @@ router.post("/n8n-proxy", async (req, res) => {
       return;
     }
 
-    // Try JSON parse
     try {
       const json = JSON.parse(rawText);
       res.status(200).json(json);
     } catch {
       res.status(200).json({ message: rawText });
     }
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(502).json({ error: `تعذّر الاتصال بـ N8N: ${message}` });
+  } catch (err: any) {
+    res.status(502).json({ error: `تعذّر الاتصال بـ N8N: ${err.message}` });
   }
 });
 
