@@ -3,7 +3,6 @@
   "buildCommand": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run build",
   "outputDirectory": "artifacts/resume-analyzer/dist/public",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
