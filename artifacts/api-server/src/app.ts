@@ -1,6 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
-import router from "./routes";
+import router from "./routes/index.js";
 
 const app: Express = express();
 
@@ -8,7 +8,7 @@ const app: Express = express();
 if (!process.env["VERCEL"]) {
   // Dynamic import to avoid crashing in environments where worker_threads is limited
   const pinoHttpModule = await import("pino-http");
-  const { logger } = await import("./lib/logger");
+  const { logger } = await import("./lib/logger.js");
 
   const pinoHttp =
     typeof pinoHttpModule === "function"
