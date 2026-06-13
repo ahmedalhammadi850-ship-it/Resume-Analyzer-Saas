@@ -1,6 +1,8 @@
 {
-  "version": 2,
-  "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm run typecheck:libs && cd artifacts/api-server && node ./build.mjs",
-  "outputDirectory": "dist"
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index.ts"
+    }
+  ]
 }
