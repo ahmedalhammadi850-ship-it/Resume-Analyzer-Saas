@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import healthRouter from "./health";
-import n8nProxyRouter from "./n8n-proxy";
+import healthRouter from "./health.js";
+import n8nProxyRouter from "./n8n-proxy.js";
 
 const router: IRouter = Router();
 
