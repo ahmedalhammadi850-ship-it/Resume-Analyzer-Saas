@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const N8N_WEBHOOK = "https://ahmed11ali.app.n8n.cloud/webhook-test/952cdd26-1852-4ba8-9a3c-0bd2c7e85f5e";
+const N8N_WEBHOOK =
+  import.meta.env.VITE_N8N_WEBHOOK_CREATE_CV ||
+  "https://ahmed11ali.app.n8n.cloud/webhook/952cdd26-1852-4ba8-9a3c-0bd2c7e85f5e";
 const PROXY_URL = `${import.meta.env.BASE_URL}api/n8n-proxy`.replace(/\/+/g, "/");
 
 type Role = "assistant" | "user";
