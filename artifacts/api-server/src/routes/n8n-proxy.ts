@@ -11,13 +11,13 @@ router.post("/n8n-proxy", async (req, res) => {
   }
 
   try {
-    const n8nRes = await fetch(webhook_url, {
+    const n8nRes: any = await fetch(webhook_url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
-    const contentType = n8nRes.headers.get("content-type") ?? "";
+    const contentType: string = n8nRes.headers.get("content-type") ?? "";
 
     const isBinary =
       contentType.includes("application/pdf") ||
@@ -28,7 +28,7 @@ router.post("/n8n-proxy", async (req, res) => {
     if (isBinary) {
       const buffer = await n8nRes.arrayBuffer();
       const base64 = Buffer.from(buffer).toString("base64");
-      const disposition = n8nRes.headers.get("content-disposition") ?? "";
+      const disposition: string = n8nRes.headers.get("content-disposition") ?? "";
       const nameMatch = disposition.match(/filename[^;=\n]*=([^;\n]*)/);
       const fileName = nameMatch ? nameMatch[1].replace(/['"]/g, "").trim() : "resume.pdf";
       res.status(200).json({
@@ -40,7 +40,7 @@ router.post("/n8n-proxy", async (req, res) => {
       return;
     }
 
-    const rawText = await n8nRes.text();
+    const rawText: string = await n8nRes.text();
 
     if (rawText.startsWith("%PDF") || rawText.includes("%%EOF")) {
       const base64 = Buffer.from(rawText, "binary").toString("base64");
