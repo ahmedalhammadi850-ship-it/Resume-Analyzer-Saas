@@ -1,9 +1,26 @@
 {
   "version": 2,
-  "installCommand": "pnpm install",
-  "buildCommand": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run build",
-  "outputDirectory": "artifacts/resume-analyzer/dist/public",
-  "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "artifacts/resume-analyzer/dist/public"
+      }
+    },
+    {
+      "src": "api/healthz.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/n8n-proxy.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/api/healthz", "dest": "/api/healthz.ts" },
+    { "src": "/api/n8n-proxy", "dest": "/api/n8n-proxy.ts" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
