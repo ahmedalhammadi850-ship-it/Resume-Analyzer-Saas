@@ -1,8 +1,4 @@
 {
-  "version": 2,
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/resume-analyzer run build",
-  "outputDirectory": "artifacts/resume-analyzer/dist",
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
