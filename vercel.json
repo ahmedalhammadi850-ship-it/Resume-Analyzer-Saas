@@ -1,8 +1,9 @@
 {
   "version": 2,
+  "framework": "vite",
   "installCommand": "pnpm install",
   "buildCommand": "pnpm --filter @workspace/resume-analyzer run build",
-  "outputDirectory": "artifacts/resume-analyzer/dist",
+  "outputDirectory": "artifacts/resume-analyzer/dist/public",
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
