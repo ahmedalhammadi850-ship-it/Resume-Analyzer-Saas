@@ -26,9 +26,19 @@ if (!basePath) {
   );
 }
 
+const stripUseClient = (): import("vite").Plugin => ({
+  name: "strip-use-client",
+  transform(code, id) {
+    if (!id.includes("node_modules") && /\.(tsx?|jsx?)$/.test(id)) {
+      return code.replace(/^["']use client["'];?\r?\n?/m, "");
+    }
+  },
+});
+
 export default defineConfig({
   base: basePath,
   plugins: [
+    stripUseClient(),
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
