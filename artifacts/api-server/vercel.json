@@ -1,4 +1,6 @@
 {
+  "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm run typecheck:libs && cd artifacts/api-server && pnpm run build",
   "rewrites": [
     {
       "source": "/(.*)",
