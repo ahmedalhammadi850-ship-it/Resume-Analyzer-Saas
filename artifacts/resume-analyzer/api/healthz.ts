@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { setCors, json } from "./_utils.js";
+import { setCors, json } from "./_utils";
 
 export default function handler(req: IncomingMessage, res: ServerResponse): void {
   setCors(res);

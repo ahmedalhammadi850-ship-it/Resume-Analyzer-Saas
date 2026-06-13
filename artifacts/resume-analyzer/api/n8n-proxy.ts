@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { parseJsonBody, setCors, json } from "./_utils.js";
+import { parseJsonBody, setCors, json } from "./_utils";
 
 export default async function handler(
   req: IncomingMessage,
