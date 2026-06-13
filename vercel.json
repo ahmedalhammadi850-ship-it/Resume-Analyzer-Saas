@@ -1,7 +1,7 @@
 {
   "installCommand": "pnpm install",
   "buildCommand": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run build",
-  "outputDirectory": "artifacts/resume-analyzer/dist/public",
+  "outputDirectory": "dist",
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
