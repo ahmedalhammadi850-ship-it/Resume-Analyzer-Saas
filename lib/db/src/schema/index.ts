@@ -35,7 +35,7 @@ export const insertAnalysisSchema = createInsertSchema(analysesTable).omit({ id:
 export const insertAppSettingSchema = createInsertSchema(appSettingsTable);
 
 export type User = typeof usersTable.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertUser = typeof usersTable.$inferInsert;
 export type Analysis = typeof analysesTable.$inferSelect;
-export type InsertAnalysis = z.infer<typeof insertAnalysisSchema>;
+export type InsertAnalysis = typeof analysesTable.$inferInsert;
 export type AppSetting = typeof appSettingsTable.$inferSelect;

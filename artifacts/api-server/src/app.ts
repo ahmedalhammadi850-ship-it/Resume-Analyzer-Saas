@@ -3,8 +3,11 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — @types/pg resolved from workspace root
 import pg from "pg";
 import router from "./routes/index.js";
+import { replitAuthMiddleware } from "./routes/replit-auth.js";
 
 const app: Express = express();
 
@@ -45,6 +48,8 @@ app.use(session({
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   },
 }));
+
+app.use(replitAuthMiddleware);
 
 app.use("/api", router);
 

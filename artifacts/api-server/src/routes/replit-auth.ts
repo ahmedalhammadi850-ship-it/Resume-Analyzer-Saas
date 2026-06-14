@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getTokenFromRequest, getUserIdentityFromToken } from "@replit/repl-auth";
+import { getUserInfo } from "@replit/repl-auth";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
@@ -7,53 +7,55 @@ import { FREE_PLAN_LIMIT } from "../lib/constants.js";
 
 const router = Router();
 
-router.get("/replit-auth/login", (req, res) => {
-  const redirectUri = `${req.protocol}://${req.get("host")}/api/replit-auth/callback`;
-  res.redirect(
-    `https://replit.com/auth_with_repl_site?domain=${req.get("host")}`
-  );
+router.get("/replit-auth/login", (req: any, res: any) => {
+  const returnTo = (req.query?.returnTo as string) || "/dashboard";
+  const host = req.headers?.host || req.hostname || "";
+  const protocol = (req.headers?.["x-forwarded-proto"] as string) || "https";
+  const returnUrl = encodeURIComponent(`${protocol}://${host}${returnTo}`);
+  res.redirect(`https://replit.com/login?goto=${returnUrl}`);
 });
 
-router.post("/replit-auth/callback", async (req, res) => {
+router.get("/replit-auth/logout", (req: any, res: any) => {
+  req.session?.destroy(() => {
+    res.redirect("/");
+  });
+});
+
+export async function replitAuthMiddleware(req: any, res: any, next: any) {
+  const userInfo = getUserInfo(req as any);
+  if (!userInfo?.id) {
+    next();
+    return;
+  }
+
+  const id = String(userInfo.id);
+  const name = (userInfo as any).name || (userInfo as any).username || "User";
+  const email = `${(userInfo as any).name || id}@users.replit.com`;
+
   try {
-    const token = getTokenFromRequest(req);
-    if (!token) {
-      res.status(400).json({ error: "No auth token" });
-      return;
-    }
-    const identity = await getUserIdentityFromToken(token);
-    if (!identity) {
-      res.status(401).json({ error: "Invalid token" });
-      return;
-    }
-
-    const id = String(identity.id);
-    const name = identity.name || identity.username || "User";
-    const email = `${identity.username}@users.replit.com`;
-
-    let existing = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+    const existing = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
     if (!existing.length) {
-      const [newUser] = await db.insert(usersTable).values({
+      await db.insert(usersTable).values({
         id,
         name,
         email,
         plan: "free",
         remainingScans: FREE_PLAN_LIMIT,
         role: "user",
-      }).returning();
-      existing = [newUser];
+      });
     }
 
-    (req.session as any).userId = id;
-    await new Promise<void>((resolve, reject) => {
-      req.session.save((err) => (err ? reject(err) : resolve()));
-    });
-
-    res.redirect("/dashboard");
-  } catch (err: any) {
-    console.error("Replit Auth callback error:", err);
-    res.redirect("/login?error=auth_failed");
+    if ((req.session as any)?.userId !== id) {
+      (req.session as any).userId = id;
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err: any) => (err ? reject(err) : resolve()));
+      });
+    }
+  } catch (err) {
+    console.error("replitAuthMiddleware error:", err);
   }
-});
+
+  next();
+}
 
 export default router;
