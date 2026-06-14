@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
 
@@ -19,29 +20,30 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
 
   const hasAccess = !requireRole || (requireRole === "admin" ? isAdmin : userProfile?.role === requireRole);
 
+  const profileLoading = !!firebaseUser && !userProfile;
+
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !profileLoading) {
       if (!firebaseUser) {
         setLocation("/login");
-      } else if (userProfile && !hasAccess) {
+      } else if (!hasAccess) {
         setLocation("/dashboard");
       }
     }
-  }, [loading, firebaseUser, userProfile, hasAccess, setLocation]);
+  }, [loading, profileLoading, firebaseUser, hasAccess, setLocation]);
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
-          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <div className="text-muted-foreground font-medium">Loading...</div>
         </div>
       </div>
     );
   }
 
-  if (!firebaseUser) return null;
-  if (userProfile && !hasAccess) return null;
+  if (!firebaseUser || !hasAccess) return null;
 
   return <>{children}</>;
 }

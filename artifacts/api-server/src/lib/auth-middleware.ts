@@ -30,8 +30,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     const decoded = await getAdminAuth().verifyIdToken(token);
     req.user = {
       uid: decoded.uid,
-      email: decoded.email || "",
-      name: decoded.name || decoded.email || "",
+      email: decoded.email ?? "",
+      name: (decoded.name as string | undefined) ?? decoded.email ?? "",
     };
     next();
   } catch {
@@ -50,8 +50,9 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
         return;
       }
       next();
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 }
