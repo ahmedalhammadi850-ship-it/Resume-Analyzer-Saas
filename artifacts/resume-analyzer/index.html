@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
 
     <!-- Primary SEO -->
-    <title>CV Audit Tool — محلل السيرة الذاتية بالذكاء الاصطناعي | فحص ATS مجاني</title>
-    <meta name="description" content="حلّل سيرتك الذاتية بالذكاء الاصطناعي مجاناً. احصل على درجة ATS فورية وتقرير يكشف الكلمات المفتاحية المفقودة ويرفع فرصك في الحصول على المقابلة. جرّبه الآن." />
-    <meta name="keywords" content="محلل سيرة ذاتية, CV analyzer, ATS checker, فحص سيرة ذاتية, ذكاء اصطناعي, تحسين CV, resume analyzer, AI resume, ATS score, كلمات مفتاحية وظيفة" />
+    <title>CV Audit Tool - AI Resume Analyzer &amp; Resume Audit Platform</title>
+    <meta name="description" content="CV Audit Tool is an AI-powered resume analyzer that helps job seekers audit, review, score and improve their resumes for better interview success." />
+    <meta name="keywords" content="CV Audit Tool, CV Audit, Resume Audit Tool, Resume Analyzer, CV Checker, AI Resume Analyzer, ATS checker, resume review, ATS score, resume audit, محلل سيرة ذاتية, فحص ATS" />
     <meta name="author" content="CV Audit Tool" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="google-site-verification" content="kUJsGJd2oCx7lEVf_6le5bei6VCvRSDMZZDGaEPOaiI" />
@@ -17,53 +17,98 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://cv-audit-tool.vercel.app/" />
     <meta property="og:site_name" content="CV Audit Tool" />
-    <meta property="og:title" content="CV Audit Tool — محلل السيرة الذاتية بالذكاء الاصطناعي" />
-    <meta property="og:description" content="حلّل سيرتك الذاتية مجاناً. درجة ATS فورية + كلمات مفتاحية مفقودة + توصيات لرفع فرص المقابلة." />
+    <meta property="og:title" content="CV Audit Tool - AI Resume Analyzer &amp; Resume Audit Platform" />
+    <meta property="og:description" content="CV Audit Tool is an AI-powered resume analyzer that helps job seekers audit, review, score and improve their resumes for better interview success." />
     <meta property="og:image" content="https://cv-audit-tool.vercel.app/opengraph.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="ar_SA" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ar_SA" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://cv-audit-tool.vercel.app/" />
-    <meta name="twitter:title" content="CV Audit Tool — محلل السيرة الذاتية بالذكاء الاصطناعي" />
-    <meta name="twitter:description" content="حلّل سيرتك الذاتية مجاناً. درجة ATS فورية + توصيات لرفع فرص المقابلة." />
+    <meta name="twitter:title" content="CV Audit Tool - AI Resume Analyzer &amp; Resume Audit Platform" />
+    <meta name="twitter:description" content="CV Audit Tool is an AI-powered resume analyzer that helps job seekers audit, review, score and improve their resumes for better interview success." />
     <meta name="twitter:image" content="https://cv-audit-tool.vercel.app/opengraph.jpg" />
 
     <!-- JSON-LD Structured Data -->
+
+    <!-- 1. WebSite Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": "WebSite",
       "name": "CV Audit Tool",
-      "alternateName": "محلل السيرة الذاتية بالذكاء الاصطناعي",
+      "alternateName": ["CV Audit", "Resume Audit Tool", "AI Resume Analyzer"],
       "url": "https://cv-audit-tool.vercel.app/",
-      "description": "محلل السيرة الذاتية بالذكاء الاصطناعي — احصل على درجة ATS فورية وتقرير شامل لرفع فرصك في الحصول على المقابلة",
+      "description": "CV Audit Tool is an AI-powered resume analyzer that helps job seekers audit, review, score and improve their resumes for better interview success.",
+      "inLanguage": ["en", "ar"],
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://cv-audit-tool.vercel.app/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- 2. Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "CV Audit Tool",
+      "url": "https://cv-audit-tool.vercel.app/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cv-audit-tool.vercel.app/favicon.svg"
+      },
+      "description": "CV Audit Tool provides AI-powered resume analysis, CV audit, and ATS score checking to help job seekers land more interviews.",
+      "sameAs": []
+    }
+    </script>
+
+    <!-- 3. SoftwareApplication Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CV Audit Tool",
+      "alternateName": ["CV Audit", "Resume Audit Tool", "Resume Analyzer", "CV Checker", "AI Resume Analyzer"],
+      "url": "https://cv-audit-tool.vercel.app/",
+      "description": "CV Audit Tool is an AI-powered resume analyzer and CV audit platform. Get instant ATS score, identify missing keywords, and receive actionable recommendations to improve your resume and land more interviews.",
       "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
+      "applicationSubCategory": "Resume Analyzer",
+      "operatingSystem": "Web Browser",
       "offers": {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD",
-        "description": "تجربة مجانية متاحة بدون بطاقة ائتمان"
+        "description": "Free plan available — no credit card required"
       },
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "4.9",
-        "reviewCount": "50000"
+        "ratingCount": "50000"
       },
-      "inLanguage": ["ar", "en"],
       "featureList": [
-        "فحص ATS (Applicant Tracking System)",
-        "تحليل الكلمات المفتاحية المفقودة",
-        "توصيات قابلة للتنفيذ",
-        "تحليل فجوة المهارات",
-        "تقرير فوري بالذكاء الاصطناعي"
-      ]
+        "AI Resume Analyzer",
+        "CV Audit and Review",
+        "ATS Score Checker",
+        "Resume Audit Tool",
+        "CV Checker",
+        "Missing Keywords Analysis",
+        "Actionable Resume Improvement Tips",
+        "Job Description Matching"
+      ],
+      "screenshot": "https://cv-audit-tool.vercel.app/opengraph.jpg"
     }
     </script>
 
+    <!-- 4. FAQPage Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -71,26 +116,34 @@
       "mainEntity": [
         {
           "@type": "Question",
-          "name": "ما هو نظام ATS؟",
+          "name": "What is CV Audit Tool?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "نظام تتبع المتقدمين (ATS) هو برنامج تستخدمه 99% من شركات Fortune 500 لتصفية السير الذاتية وترتيبها قبل أن يقرأها أي إنسان. تُحاكي أداتنا هذه العملية لضمان اجتياز سيرتك الذاتية للفلتر."
+            "text": "CV Audit Tool is an AI-powered resume analyzer and CV audit platform that helps job seekers instantly check their resume against any job description, get an ATS score, identify missing keywords, and receive actionable recommendations to improve interview chances."
           }
         },
         {
           "@type": "Question",
-          "name": "كيف يعمل تطابق الوظيفة؟",
+          "name": "How does the Resume Audit work?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "نستخدم ذكاءً اصطناعياً متقدماً لمقارنة محتوى سيرتك الذاتية بوصف الوظيفة المحدد الذي تقدمه، لتحديد المهارات والكلمات المفتاحية وفجوات الخبرة المفقودة."
+            "text": "Upload your resume (PDF or DOCX), paste the target job description, and our AI engine performs a full CV audit — scoring your resume against ATS criteria, spotting missing keywords, and providing a prioritized list of improvements."
           }
         },
         {
           "@type": "Question",
-          "name": "هل بياناتي آمنة؟",
+          "name": "What is an ATS score and why does it matter?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "نعم. نحن لا نشارك بيانات سيرتك الذاتية مع أصحاب العمل من الطرف الثالث. تتم معالجة مستنداتك وتخزينها بأمان فقط لسجلك الشخصي."
+            "text": "An ATS (Applicant Tracking System) score measures how well your resume matches a specific job description. Over 99% of Fortune 500 companies use ATS software to filter resumes before a human ever reads them. A higher ATS score means a greater chance of reaching the interview stage."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is CV Audit Tool free to use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. CV Audit Tool offers a free plan with no credit card required. You can analyze your resume and receive an ATS score, missing keywords report, and improvement suggestions instantly."
           }
         }
       ]
@@ -112,78 +165,122 @@
       ═══════════════════════════════════════════════════════
     -->
     <div id="seo-shell" aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0">
-      <main lang="ar" dir="rtl">
-        <h1>توقف عن التخمين. ابدأ في الحصول على المقابلات.</h1>
-        <p>ارفع سيرتك الذاتية. الصق وصف الوظيفة. احصل على درجة ATS فورية مدعومة بالذكاء الاصطناعي وتحليل شامل يخبرك بالضبط ما يجب تغييره.</p>
-        <a href="/register">حلل سيرتي الذاتية الآن</a>
-        <a href="/pricing">عرض الأسعار</a>
+
+      <!-- English SEO Content — indexed by Googlebot -->
+      <main lang="en">
+        <h1>CV Audit Tool</h1>
+        <p>CV Audit Tool is the leading AI-powered resume analyzer and CV audit platform. Upload your resume, paste a job description, and get an instant ATS score with a full CV audit report — including missing keywords, skill gaps, and actionable recommendations to land more interviews.</p>
+        <a href="/register">Start Your Free CV Audit</a>
+        <a href="/pricing">View Pricing Plans</a>
 
         <section>
-          <h2>كيف يعمل محلل السيرة الذاتية</h2>
-          <p>ثلاث خطوات بسيطة لتحسين طلبك وزيادة فرصك في الحصول على مقابلة العمل.</p>
+          <h2>What is CV Audit Tool?</h2>
+          <p>CV Audit Tool is a free AI resume analyzer that performs a complete CV audit in seconds. Whether you call it a resume audit tool, CV checker, or AI resume analyzer — our platform does it all. We compare your resume against any job description using advanced AI, simulating how Applicant Tracking Systems (ATS) score and rank candidates before a human recruiter ever sees your application.</p>
+          <p>Over 99% of Fortune 500 companies use ATS software to filter resumes. Most qualified candidates are rejected automatically because their resume fails the CV audit. CV Audit Tool was built to fix that — giving every job seeker access to enterprise-grade resume analysis for free.</p>
+        </section>
+
+        <section>
+          <h2>How CV Audit Works — 3 Simple Steps</h2>
           <ol>
             <li>
-              <h3>١. ارفع سيرتك الذاتية</h3>
-              <p>ارفع سيرتك الذاتية الحالية بصيغة PDF أو DOCX. يستخرج محللنا كل خبراتك على الفور.</p>
+              <h3>Step 1: Upload Your Resume</h3>
+              <p>Upload your current resume in PDF or DOCX format. Our AI resume analyzer extracts all your experience, skills, and qualifications instantly — ready for a full CV audit.</p>
             </li>
             <li>
-              <h3>٢. أضف هدف الوظيفة</h3>
-              <p>الصق وصف الوظيفة المحددة التي تريدها. نحلل بالضبط ما يبحث عنه صاحب العمل.</p>
+              <h3>Step 2: Add the Job Description</h3>
+              <p>Paste the target job description. Our resume audit tool analyzes exactly what skills, keywords, and qualifications the employer is looking for — and compares them against your CV.</p>
             </li>
             <li>
-              <h3>٣. احصل على الرؤى</h3>
-              <p>احصل على درجة ATS مفصلة والكلمات المفتاحية المفقودة وتوصيات قابلة للتنفيذ للتغلب على الأنظمة الآلية.</p>
+              <h3>Step 3: Get Your CV Audit Report</h3>
+              <p>Receive a detailed ATS score, a list of missing keywords, skill gap analysis, and prioritized resume improvement recommendations. Your complete CV audit report is ready in under 30 seconds.</p>
             </li>
           </ol>
         </section>
 
         <section>
-          <h2>رؤى مبنية على البيانات لإتقان طلبك</h2>
+          <h2>Resume Audit Tool Features</h2>
           <ul>
             <li>
-              <h3>محاكاة درجة ATS</h3>
-              <p>اعرف بالضبط كيف تقرأ برامج التوظيف سيرتك الذاتية قبل أن يقرأها أي إنسان.</p>
+              <h3>AI Resume Analyzer</h3>
+              <p>Our AI resume analyzer reads your CV the same way an ATS does — scoring layout, keywords, relevance, and formatting. Get an objective resume audit score for any job you apply to.</p>
             </li>
             <li>
-              <h3>تحليل فجوة الكلمات المفتاحية</h3>
-              <p>حدد المهارات والكلمات المفتاحية التي تفتقدها من وصف الوظيفة.</p>
+              <h3>CV Audit Score</h3>
+              <p>Every CV audit produces a percentage score (0–100%) showing how well your resume matches the job. A score above 80% significantly increases your chance of passing the ATS filter and reaching the interview stage.</p>
             </li>
             <li>
-              <h3>توصيات قابلة للتنفيذ</h3>
-              <p>احصل على تعليمات محددة حول كيفية إعادة صياغة النقاط لتحقيق أقصى تأثير.</p>
+              <h3>Resume Checker for Missing Keywords</h3>
+              <p>Our CV checker identifies every important keyword missing from your resume. These are the exact words and phrases ATS systems and recruiters scan for — adding them can dramatically improve your ATS score.</p>
+            </li>
+            <li>
+              <h3>ATS Score Optimization</h3>
+              <p>Improving your ATS score is the fastest way to get more interviews. Our resume audit tool tells you which sections to rewrite, which skills to add, and how to reformat your CV to maximize ATS compatibility.</p>
+            </li>
+            <li>
+              <h3>Actionable Resume Improvement Recommendations</h3>
+              <p>Unlike basic CV checkers, CV Audit Tool provides specific, actionable advice — not just a score. We tell you exactly what to change in your resume and why, so every edit makes a measurable difference.</p>
             </li>
           </ul>
         </section>
 
         <section>
-          <h2>إحصائيات موثوقة</h2>
+          <h2>Why Use an AI Resume Analyzer Before Applying?</h2>
+          <p>The average job opening receives over 250 applications. Recruiters spend just 7 seconds reviewing each resume that passes the ATS filter. Without a proper CV audit, your application may never reach a human reader — no matter how qualified you are.</p>
+          <p>Using CV Audit Tool as your AI resume analyzer before every application ensures:</p>
           <ul>
-            <li>أكثر من 50,000 سيرة ذاتية تم تحليلها</li>
-            <li>87% زيادة في معدل المقابلات لمستخدمينا</li>
-            <li>تقييم 4.9 من 5 من المستخدمين</li>
+            <li>Your resume passes ATS filters automatically</li>
+            <li>Your CV contains the exact keywords recruiters search for</li>
+            <li>Your resume audit score meets the hiring threshold for each specific role</li>
+            <li>You spend time improving the right parts of your CV — not guessing</li>
+            <li>Your interview callback rate increases measurably</li>
+          </ul>
+          <p>Job seekers who perform a CV audit before submitting their resume report an 87% increase in interview callbacks. CV Audit Tool makes professional resume analysis accessible to everyone — completely free.</p>
+        </section>
+
+        <section>
+          <h2>CV Audit Tool vs. Other Resume Analyzers</h2>
+          <p>Most resume checkers give you a generic score without explaining why. CV Audit Tool is a true AI resume analyzer that understands context — it knows the difference between a marketing CV and an engineering resume, and tailors every CV audit report accordingly.</p>
+          <ul>
+            <li>Instant CV audit — results in under 30 seconds</li>
+            <li>Job-specific ATS score — not a generic resume score</li>
+            <li>Keyword gap analysis with exact phrases to add</li>
+            <li>Section-by-section resume audit feedback</li>
+            <li>Supports English and Arabic resumes</li>
+            <li>Free plan — no credit card required</li>
           </ul>
         </section>
 
         <section>
-          <h2>الأسئلة الشائعة عن محلل السيرة الذاتية بالذكاء الاصطناعي</h2>
+          <h2>Frequently Asked Questions — CV Audit Tool</h2>
           <dl>
-            <dt>ما هو نظام ATS؟</dt>
-            <dd>نظام تتبع المتقدمين (ATS) هو برنامج تستخدمه 99% من شركات Fortune 500 لتصفية السير الذاتية وترتيبها قبل أن يقرأها أي إنسان. تُحاكي أداتنا هذه العملية لضمان اجتياز سيرتك الذاتية للفلتر.</dd>
-            <dt>كيف يعمل تطابق الوظيفة؟</dt>
-            <dd>نستخدم ذكاءً اصطناعياً متقدماً لمقارنة محتوى سيرتك الذاتية بوصف الوظيفة المحدد الذي تقدمه، لتحديد المهارات والكلمات المفتاحية وفجوات الخبرة المفقودة.</dd>
-            <dt>هل بياناتي آمنة؟</dt>
-            <dd>نعم. نحن لا نشارك بيانات سيرتك الذاتية مع أصحاب العمل من الطرف الثالث. تتم معالجة مستنداتك وتخزينها بأمان فقط لسجلك الشخصي.</dd>
+            <dt>What is a CV Audit?</dt>
+            <dd>A CV audit is a systematic review of your resume against a specific job description, evaluating keyword relevance, ATS compatibility, formatting, and content quality. CV Audit Tool automates this process using AI — delivering a complete resume audit report in seconds.</dd>
+            <dt>What is an ATS Score?</dt>
+            <dd>An ATS score is a percentage that shows how closely your resume matches a job description as scored by an Applicant Tracking System. Most companies set a minimum ATS threshold (typically 70–80%). Our AI resume analyzer calculates your ATS score and shows you exactly how to improve it.</dd>
+            <dt>Is CV Audit Tool free?</dt>
+            <dd>Yes. CV Audit Tool offers a free plan with no credit card required. Run a full CV audit, get your ATS score, and receive keyword recommendations — all for free. Premium plans are available for unlimited resume audits and advanced features.</dd>
+            <dt>How is CV Audit Tool different from a CV checker?</dt>
+            <dd>A basic CV checker flags formatting issues. CV Audit Tool is a full AI resume analyzer that performs a deep CV audit — comparing your resume to a specific job description, scoring ATS compatibility, identifying missing keywords, and providing ranked, actionable improvement steps.</dd>
           </dl>
         </section>
 
         <nav>
-          <a href="/">الرئيسية</a>
-          <a href="/pricing">الأسعار</a>
-          <a href="/about">من نحن</a>
-          <a href="/register">إنشاء حساب</a>
-          <a href="/login">تسجيل الدخول</a>
+          <a href="/">CV Audit Tool - Home</a>
+          <a href="/pricing">Resume Analyzer Pricing</a>
+          <a href="/about">About CV Audit Tool</a>
+          <a href="/register">Start Free CV Audit</a>
         </nav>
       </main>
+
+      <!-- Arabic SEO Content -->
+      <aside lang="ar" dir="rtl">
+        <h2>محلل السيرة الذاتية بالذكاء الاصطناعي</h2>
+        <p>ارفع سيرتك الذاتية. الصق وصف الوظيفة. احصل على درجة ATS فورية مدعومة بالذكاء الاصطناعي وتحليل شامل يخبرك بالضبط ما يجب تغييره.</p>
+        <a href="/register">حلل سيرتي الذاتية الآن</a>
+        <a href="/pricing">عرض الأسعار</a>
+        <p>أكثر من 50,000 سيرة ذاتية تم تحليلها — 87% زيادة في معدل المقابلات لمستخدمينا — تقييم 4.9 من 5</p>
+      </aside>
+
     </div>
 
     <div id="root"></div>

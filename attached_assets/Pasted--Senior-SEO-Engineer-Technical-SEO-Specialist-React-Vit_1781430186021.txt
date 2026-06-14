@@ -1,0 +1,107 @@
+أنت Senior SEO Engineer + Technical SEO Specialist + React/Vite Expert.
+
+الهدف:
+
+أريد أن يظهر موقعي https://cv-audit-tool.vercel.app في نتائج Google عند البحث عن الكلمات التالية:
+
+* CV Audit Tool
+* CV Audit
+* Resume Audit Tool
+* Resume Analyzer
+* CV Checker
+* AI Resume Analyzer
+
+المطلوب تنفيذ تحسين SEO كامل للموقع:
+
+1. الصفحة الرئيسية
+
+* اجعل Title الصفحة:
+  CV Audit Tool - AI Resume Analyzer & Resume Audit Platform
+
+* اجعل Meta Description:
+  CV Audit Tool is an AI-powered resume analyzer that helps job seekers audit, review, score and improve their resumes for better interview success.
+
+* أضف H1 واحد فقط:
+  CV Audit Tool
+
+* أضف أقسام تحتوي بشكل طبيعي على الكلمات:
+  CV Audit
+  Resume Audit
+  Resume Analyzer
+  Resume Checker
+  AI Resume Review
+
+2. Structured Data
+   أضف JSON-LD Schema من نوع:
+
+* WebSite
+* Organization
+* SoftwareApplication
+
+واستخدم اسم العلامة التجارية:
+
+CV Audit Tool
+
+3. Open Graph
+   أضف:
+
+* og:title
+* og:description
+* og:url
+* og:type
+
+4. Canonical URL
+   أضف:
+
+https://cv-audit-tool.vercel.app/
+
+5. Sitemap
+   تأكد أن sitemap.xml يحتوي جميع الصفحات القابلة للفهرسة.
+
+6. Robots
+   تأكد أن robots.txt يسمح للفهرسة بالكامل.
+
+7. تحسين المحتوى
+   أضف محتوى حقيقي لا يقل عن 800 كلمة يشرح:
+
+* ما هو CV Audit
+* كيف يعمل CV Audit Tool
+* فوائد تحليل السيرة الذاتية
+* تحسين ATS Score
+* تحسين فرص الحصول على المقابلات
+
+8. Google Search Console
+   تأكد من:
+
+* عدم وجود noindex
+* عدم وجود canonical خاطئ
+* عدم وجود أخطاء تغطية
+
+9. الكلمات المستهدفة
+   ركز على:
+
+CV Audit Tool
+CV Audit
+Resume Audit
+Resume Analyzer
+CV Checker
+AI Resume Analyzer
+
+10. التقرير النهائي
+    أعطني:
+
+* جميع الملفات المعدلة
+* Title النهائي
+* Meta Description النهائية
+* Schema المضافة
+* الكلمات المفتاحية المستهدفة
+* تقييم جاهزية الموقع للظهور في Google
+
+الهدف النهائي:
+زيادة فرصة ظهور موقع https://cv-audit-tool.vercel.app عند البحث عن:
+CV Audit Tool
+CV Audit
+Resume Audit Tool
+Resume Analyzer
+CV Checker
+مع الالتزام بممارسات SEO الصحيحة وعدم استخدام أي أساليب مخالفة لإرشادات Google.
