@@ -9,15 +9,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { uploadResumeFile, runJdAnalysis, runGeneralAnalysis, saveAnalysis, decrementScans, addScansToUser } from "@/lib/firestore";
+import { api } from "@/lib/api";
 import { FileUp, Target, Zap, AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
+import { N8N_WEBHOOK_JD, N8N_WEBHOOK_GENERAL } from "@/types";
 
 const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
 
+function extractScore(results: Record<string, unknown>): number {
+  const candidates = [
+    results.ats_score, results.match_score, results.score,
+    results["Score"], results["overall_score"],
+  ];
+  for (const c of candidates) {
+    const n = Number(c);
+    if (!isNaN(n) && n > 0) return n;
+  }
+  return 0;
+}
+
 export default function Analyze() {
-  const { userProfile, currentUser, refreshProfile } = useAuth();
+  const { userProfile, refreshProfile } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -31,13 +44,13 @@ export default function Analyze() {
 
   const isFreeUser = userProfile?.plan === "free";
   const outOfScans = isFreeUser && (userProfile?.remainingScans || 0) <= 0;
-  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email ?? "");
+  const isAdmin = ADMIN_EMAILS.includes(userProfile?.email ?? "");
 
   const handleAddScans = async () => {
-    if (!userProfile?.uid) return;
+    if (!userProfile?.id) return;
     setIsAddingScans(true);
     try {
-      await addScansToUser(userProfile.uid, 10);
+      await api.admin.addScans(userProfile.id, 10);
       await refreshProfile();
       toast({ title: "✅ تمت إضافة 10 فحوصات لحسابك" });
     } catch (e: any) {
@@ -51,11 +64,7 @@ export default function Analyze() {
     const selected = e.target.files?.[0];
     if (selected) {
       if (selected.size > 10 * 1024 * 1024) {
-        toast({
-          title: t("analyze.fileTooLarge"),
-          description: t("analyze.uploadDesc"),
-          variant: "destructive"
-        });
+        toast({ title: t("analyze.fileTooLarge"), description: t("analyze.uploadDesc"), variant: "destructive" });
         return;
       }
       setFile(selected);
@@ -64,50 +73,51 @@ export default function Analyze() {
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userProfile?.uid) return;
+    if (!userProfile?.id) return;
     if (outOfScans) {
-      toast({
-        title: t("analyze.outOfScans"),
-        description: t("analyze.upgradeMsg"),
-        variant: "destructive"
-      });
+      toast({ title: t("analyze.outOfScans"), description: t("analyze.upgradeMsg"), variant: "destructive" });
       setLocation("/pricing");
       return;
     }
     if (!file) {
-      toast({ title: t("analyze.fileRequired"), description: t("analyze.fileRequired"), variant: "destructive" });
+      toast({ title: t("analyze.fileRequired"), variant: "destructive" });
       return;
     }
 
     setIsProcessing(true);
     try {
-      const results = activeTab === "jd_match"
-        ? await runJdAnalysis(file, jobTitle, jobDescription)
-        : await runGeneralAnalysis(file);
+      const form = new FormData();
+      form.append("resume_file", file);
+      let n8nRes: Response;
 
-      const analysisId = await saveAnalysis(
-        userProfile.uid,
-        activeTab as "jd_match" | "general_review",
-        file.name,
-        results
-      );
-
-      if (isFreeUser) {
-        await decrementScans(userProfile.uid);
-        await refreshProfile();
+      if (activeTab === "jd_match") {
+        form.append("job_title", jobTitle);
+        form.append("job_description", jobDescription);
+        n8nRes = await fetch(N8N_WEBHOOK_JD, { method: "POST", body: form });
+      } else {
+        n8nRes = await fetch(N8N_WEBHOOK_GENERAL, { method: "POST", body: form });
       }
 
-      toast({
-        title: t("common.analysisComplete"),
-        description: t("common.analysisCompleteMsg"),
+      if (!n8nRes.ok) throw new Error(`N8N رجع بخطأ (${n8nRes.status})`);
+
+      const rawData = await n8nRes.json();
+      const results = Array.isArray(rawData) ? rawData[0] : rawData;
+      if (!results || typeof results !== "object") throw new Error("لم يتم استلام بيانات من N8N");
+      const score = extractScore(results as Record<string, unknown>);
+
+      const analysis = await api.analyses.create({
+        analysisType: activeTab as "jd_match" | "general_review",
+        fileName: file.name,
+        results: results as Record<string, unknown>,
+        score,
       });
-      setLocation(`/analysis/${analysisId}`);
+
+      await refreshProfile();
+
+      toast({ title: t("common.analysisComplete"), description: t("common.analysisCompleteMsg") });
+      setLocation(`/analysis/${analysis.id}`);
     } catch (error: any) {
-      toast({
-        title: t("common.analysisFailed"),
-        description: error.message || t("common.analysisFailedMsg"),
-        variant: "destructive"
-      });
+      toast({ title: t("common.analysisFailed"), description: error.message || t("common.analysisFailedMsg"), variant: "destructive" });
     } finally {
       setIsProcessing(false);
     }
@@ -139,11 +149,7 @@ export default function Analyze() {
                     disabled={isAddingScans}
                     className="border-green-500 text-green-700 hover:bg-green-50"
                   >
-                    {isAddingScans ? (
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                    )}
+                    {isAddingScans ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
                     إضافة 10 فحوصات (مدير)
                   </Button>
                 )}
@@ -159,9 +165,7 @@ export default function Analyze() {
               <Loader2 className="h-16 w-16 text-primary animate-spin" />
               <div className="text-center space-y-2">
                 <h3 className="text-xl font-bold">{t("analyze.analyzing")}</h3>
-                <p className="text-muted-foreground max-w-md">
-                  {t("analyze.analyzingDesc")}
-                </p>
+                <p className="text-muted-foreground max-w-md">{t("analyze.analyzingDesc")}</p>
               </div>
             </CardContent>
           </Card>
@@ -183,32 +187,22 @@ export default function Analyze() {
 
               <form onSubmit={handleAnalyze}>
                 <CardContent className="space-y-6 pt-6">
-                  {/* File Upload */}
                   <div className="space-y-2">
                     <Label htmlFor="resume">{t("analyze.resumeDocument")}</Label>
                     <div className="mt-2 flex justify-center rounded-lg border border-dashed border-border px-6 py-10 bg-muted/10 hover:bg-muted/30 transition-colors">
                       <div className="text-center">
-                        <FileUp className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
+                        <FileUp className="mx-auto h-12 w-12 text-muted-foreground" />
                         <div className="mt-4 flex text-sm leading-6 text-muted-foreground justify-center">
                           <label
                             htmlFor="file-upload"
                             className="relative cursor-pointer rounded-md bg-background font-semibold text-primary focus-within:outline-none hover:text-primary/80 px-2 py-1 border shadow-sm"
                           >
                             <span>{t("analyze.uploadFile")}</span>
-                            <input
-                              id="file-upload"
-                              name="file-upload"
-                              type="file"
-                              className="sr-only"
-                              accept=".pdf,.docx"
-                              onChange={handleFileChange}
-                            />
+                            <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".pdf,.docx" onChange={handleFileChange} />
                           </label>
                           <p className="pl-2 flex items-center">{t("analyze.dragDrop")}</p>
                         </div>
-                        <p className="text-xs leading-5 text-muted-foreground mt-2">
-                          {t("analyze.uploadDesc")}
-                        </p>
+                        <p className="text-xs leading-5 text-muted-foreground mt-2">{t("analyze.uploadDesc")}</p>
                         {file && (
                           <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
                             <FileUp className="h-4 w-4 mr-2" />
@@ -247,9 +241,7 @@ export default function Analyze() {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>{t("analyze.generalReviewMode")}</AlertTitle>
-                      <AlertDescription>
-                        {t("analyze.generalReviewModeDesc")}
-                      </AlertDescription>
+                      <AlertDescription>{t("analyze.generalReviewModeDesc")}</AlertDescription>
                     </Alert>
                   </TabsContent>
                 </CardContent>
@@ -257,9 +249,7 @@ export default function Analyze() {
                 <CardFooter className="border-t bg-muted/20 py-4 flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
                     {isFreeUser ? (
-                      <span>
-                        <strong>{userProfile?.remainingScans}</strong> {t("analyze.freeScansRemaining")}
-                      </span>
+                      <span><strong>{userProfile?.remainingScans}</strong> {t("analyze.freeScansRemaining")}</span>
                     ) : (
                       <span>{t("analyze.unlimitedScans")}</span>
                     )}

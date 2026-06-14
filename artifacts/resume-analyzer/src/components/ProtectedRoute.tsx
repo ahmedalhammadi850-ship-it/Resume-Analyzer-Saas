@@ -1,35 +1,33 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types";
 
-// Emails that always have admin access regardless of Firestore role field
 const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requireRole?: UserRole;
+  requireRole?: string;
 }
 
 export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
-  const { currentUser, userProfile, loading } = useAuth();
+  const { userProfile, loading } = useAuth();
   const [, setLocation] = useLocation();
 
   const isAdmin =
     userProfile?.role === "admin" ||
-    ADMIN_EMAILS.includes(currentUser?.email ?? "");
+    ADMIN_EMAILS.includes(userProfile?.email ?? "");
 
   const hasAccess = !requireRole || (requireRole === "admin" ? isAdmin : userProfile?.role === requireRole);
 
   useEffect(() => {
     if (!loading) {
-      if (!currentUser) {
-        setLocation("/login");
+      if (!userProfile) {
+        window.location.href = "/api/replit-auth/login";
       } else if (!hasAccess) {
         setLocation("/dashboard");
       }
     }
-  }, [loading, currentUser, hasAccess, setLocation]);
+  }, [loading, userProfile, hasAccess, setLocation]);
 
   if (loading) {
     return (
@@ -42,7 +40,7 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
     );
   }
 
-  if (!currentUser) return null;
+  if (!userProfile) return null;
   if (!hasAccess) return null;
 
   return <>{children}</>;

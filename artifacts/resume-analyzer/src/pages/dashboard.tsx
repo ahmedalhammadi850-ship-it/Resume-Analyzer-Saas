@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { getRecentAnalyses } from "@/lib/firestore";
+import { api } from "@/lib/api";
 import { Analysis } from "@/types";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadData() {
-      if (userProfile?.uid) {
+      if (userProfile?.id) {
         try {
-          const recent = await getRecentAnalyses(userProfile.uid, 5);
+          const recent = await api.analyses.list(5);
           setAnalyses(recent);
         } catch (error) {
           console.error("Failed to load recent analyses", error);
@@ -32,7 +32,7 @@ export default function Dashboard() {
       }
     }
     loadData();
-  }, [userProfile?.uid]);
+  }, [userProfile?.id]);
 
   const totalAnalyses = analyses.length;
   const avgScore = totalAnalyses > 0
@@ -129,9 +129,9 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {analyses.map((analysis) => (
                     <div
-                      key={analysis.analysisId}
+                      key={analysis.id}
                       className="flex items-center group cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors -mx-2"
-                      onClick={() => setLocation(`/analysis/${analysis.analysisId}`)}
+                      onClick={() => setLocation(`/analysis/${analysis.id}`)}
                     >
                       <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
                         <FileText className="h-4 w-4 sm:h-5 sm:w-5" />

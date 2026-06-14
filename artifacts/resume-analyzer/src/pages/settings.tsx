@@ -1,37 +1,13 @@
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
-  const { userProfile, resetPassword } = useAuth();
-  const { toast } = useToast();
-  const [isResetting, setIsResetting] = useState(false);
-
-  const handlePasswordReset = async () => {
-    if (!userProfile?.email) return;
-    setIsResetting(true);
-    try {
-      await resetPassword(userProfile.email);
-      toast({
-        title: "Reset link sent",
-        description: "Check your email for instructions to reset your password.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send reset link",
-        variant: "destructive"
-      });
-    } finally {
-      setIsResetting(false);
-    }
-  };
+  const { userProfile } = useAuth();
 
   return (
     <Layout>
@@ -63,21 +39,21 @@ export default function Settings() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Subscription & Billing</CardTitle>
+              <CardTitle>Subscription &amp; Billing</CardTitle>
               <CardDescription>Manage your plan</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
                 <div>
                   <div className="font-medium flex items-center gap-2">
-                    Current Plan 
+                    Current Plan
                     <Badge variant={userProfile?.plan === "pro" ? "default" : "secondary"} className="uppercase">
                       {userProfile?.plan}
                     </Badge>
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    {userProfile?.plan === "free" 
-                      ? `You have ${userProfile?.remainingScans} scans remaining.` 
+                    {userProfile?.plan === "free"
+                      ? `You have ${userProfile?.remainingScans} scans remaining.`
                       : "You have unlimited scans."}
                   </div>
                 </div>
@@ -92,19 +68,13 @@ export default function Settings() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Security</CardTitle>
-              <CardDescription>Keep your account secure</CardDescription>
+              <CardTitle>Account</CardTitle>
+              <CardDescription>Manage your login</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Password</div>
-                  <div className="text-sm text-muted-foreground">A reset link will be sent to your email address.</div>
-                </div>
-                <Button variant="outline" onClick={handlePasswordReset} disabled={isResetting}>
-                  {isResetting ? "Sending..." : "Reset Password"}
-                </Button>
-              </div>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                You are signed in via Replit. To manage your account or change your profile, visit your Replit settings.
+              </p>
             </CardContent>
           </Card>
         </div>

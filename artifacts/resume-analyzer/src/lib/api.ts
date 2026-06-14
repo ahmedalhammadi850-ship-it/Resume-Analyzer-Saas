@@ -1,0 +1,61 @@
+const BASE = "/api";
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    ...options,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw Object.assign(new Error(err.error || res.statusText), { status: res.status });
+  }
+  return res.json();
+}
+
+export const api = {
+  auth: {
+    me: () => request<any>("/auth/me"),
+    register: (id: string, name: string, email: string) =>
+      request<any>("/auth/register", { method: "POST", body: JSON.stringify({ id, name, email }) }),
+    login: (id: string) =>
+      request<any>("/auth/login", { method: "POST", body: JSON.stringify({ id }) }),
+    logout: () => request<any>("/auth/logout", { method: "POST" }),
+  },
+  users: {
+    me: () => request<any>("/users/me"),
+    updateMe: (data: Partial<{ resumeName: string }>) =>
+      request<any>("/users/me", { method: "PATCH", body: JSON.stringify(data) }),
+    createUpgradeRequest: (n8nSent: boolean) =>
+      request<any>("/users/upgrade-request", { method: "POST", body: JSON.stringify({ n8nSent }) }),
+  },
+  analyses: {
+    list: (limit?: number) =>
+      request<any[]>(`/analyses${limit ? `?limit=${limit}` : ""}`),
+    get: (id: string) => request<any>(`/analyses/${id}`),
+    create: (data: { analysisType: string; fileName: string; results: Record<string, unknown>; score: number }) =>
+      request<any>("/analyses", { method: "POST", body: JSON.stringify(data) }),
+  },
+  admin: {
+    stats: () => request<any>("/admin/stats"),
+    users: () => request<any[]>("/admin/users"),
+    suspendUser: (uid: string) =>
+      request<any>(`/admin/users/${uid}/suspend`, { method: "PATCH" }),
+    deleteUser: (uid: string) =>
+      request<any>(`/admin/users/${uid}`, { method: "DELETE" }),
+    addScans: (uid: string, amount: number) =>
+      request<any>(`/admin/users/${uid}/scans`, { method: "PATCH", body: JSON.stringify({ amount }) }),
+    upgradeRequests: () => request<any[]>("/admin/upgrade-requests"),
+    approveUpgrade: (requestId: string) =>
+      request<any>(`/admin/upgrade-requests/${requestId}/approve`, { method: "PATCH" }),
+    rejectUpgrade: (requestId: string) =>
+      request<any>(`/admin/upgrade-requests/${requestId}/reject`, { method: "PATCH" }),
+  },
+  settings: {
+    get: () => request<any>("/settings"),
+    update: (patch: Record<string, unknown>) =>
+      request<any>("/settings", { method: "PATCH", body: JSON.stringify(patch) }),
+  },
+  n8nProxy: (webhookUrl: string, body: Record<string, unknown>) =>
+    request<any>("/n8n-proxy", { method: "POST", body: JSON.stringify({ webhook_url: webhookUrl, ...body }) }),
+};

@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserAnalyses } from "@/lib/firestore";
+import { api } from "@/lib/api";
 import { Analysis } from "@/types";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { FileText, Search, Filter, Calendar, Target, Zap, ChevronRight } from "lucide-react";
+import { FileText, Search, Filter, Calendar, Target, ChevronRight } from "lucide-react";
 
 export default function History() {
   const { userProfile } = useAuth();
@@ -21,9 +21,9 @@ export default function History() {
 
   useEffect(() => {
     async function loadData() {
-      if (userProfile?.uid) {
+      if (userProfile?.id) {
         try {
-          const allAnalyses = await getUserAnalyses(userProfile.uid);
+          const allAnalyses = await api.analyses.list();
           setAnalyses(allAnalyses);
         } catch (error) {
           console.error("Failed to load analyses", error);
@@ -33,10 +33,10 @@ export default function History() {
       }
     }
     loadData();
-  }, [userProfile?.uid]);
+  }, [userProfile?.id]);
 
-  const filteredAnalyses = analyses.filter((a) => 
-    a.fileName.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredAnalyses = analyses.filter((a) =>
+    a.fileName.toLowerCase().includes(search.toLowerCase()) ||
     (a.results.job_title && String(a.results.job_title).toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -56,8 +56,8 @@ export default function History() {
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search by filename or job title..." 
+                <Input
+                  placeholder="Search by filename or job title..."
                   className="pl-9"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -78,10 +78,10 @@ export default function History() {
             ) : filteredAnalyses.length > 0 ? (
               <div className="divide-y border rounded-md">
                 {filteredAnalyses.map((analysis) => (
-                  <div 
-                    key={analysis.analysisId} 
+                  <div
+                    key={analysis.id}
                     className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => setLocation(`/analysis/${analysis.analysisId}`)}
+                    onClick={() => setLocation(`/analysis/${analysis.id}`)}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
@@ -106,7 +106,7 @@ export default function History() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-6 sm:ml-auto">
                       <div className="text-center">
                         <div className="text-sm text-muted-foreground">Score</div>

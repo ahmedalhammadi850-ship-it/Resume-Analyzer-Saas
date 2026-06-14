@@ -2,7 +2,15 @@ import { Router } from "express";
 
 const router = Router();
 
-router.post("/n8n-proxy", async (req, res) => {
+function requireAuth(req: any, res: any, next: any) {
+  if (!(req.session as any)?.userId) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  next();
+}
+
+router.post("/n8n-proxy", requireAuth, async (req, res) => {
   const { webhook_url, ...body } = req.body as { webhook_url: string; [key: string]: unknown };
 
   if (!webhook_url || !webhook_url.startsWith("https://")) {

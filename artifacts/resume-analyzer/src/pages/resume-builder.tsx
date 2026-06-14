@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import { setResumeName } from "@/lib/firestore";
+import { api } from "@/lib/api";
 import {
   Send, Bot, User, Download, FileText, Loader2,
   RefreshCw, Lock, Pencil, AlertCircle,
@@ -15,9 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const N8N_WEBHOOK =
-  import.meta.env.VITE_N8N_WEBHOOK_CREATE_CV ||
   "https://ahmed11ali.app.n8n.cloud/webhook/952cdd26-1852-4ba8-9a3c-0bd2c7e85f5e";
-const PROXY_URL = `${import.meta.env.BASE_URL}api/n8n-proxy`.replace(/\/+/g, "/");
+const PROXY_URL = "/api/n8n-proxy";
 
 type Role = "assistant" | "user";
 
@@ -34,7 +33,6 @@ function generateSessionId() {
   return `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// ── Name Entry Screen ─────────────────────────────────────────────────────────
 function NameEntryScreen({
   onConfirm,
   saving,
@@ -61,12 +59,9 @@ function NameEntryScreen({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-md mx-auto text-center space-y-8 py-10">
-      {/* Icon */}
       <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
         <FileText className="h-10 w-10 text-primary" />
       </div>
-
-      {/* Title */}
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">منشئ السيرة الذاتية</h1>
         <p className="text-muted-foreground text-sm leading-relaxed">
@@ -74,8 +69,6 @@ function NameEntryScreen({
           <span className="font-medium text-foreground">لن تتمكن من تغييره لاحقاً بدون دفع.</span>
         </p>
       </div>
-
-      {/* Inputs */}
       <div className="w-full space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
@@ -101,22 +94,17 @@ function NameEntryScreen({
             />
           </div>
         </div>
-
-        {/* Preview */}
         {(firstName.trim() || lastName.trim()) && (
           <div className="px-4 py-3 rounded-lg bg-muted/60 border text-sm font-semibold text-foreground">
             {firstName.trim()} {lastName.trim()}
           </div>
         )}
-
-        {/* Error */}
         {error && (
           <div className="flex items-center gap-2 text-destructive text-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
-
         <Button
           className="w-full h-12 text-base font-semibold"
           onClick={handleSubmit}
@@ -124,7 +112,6 @@ function NameEntryScreen({
         >
           {saving ? <><Loader2 className="h-4 w-4 me-2 animate-spin" />جارٍ الحفظ...</> : <>تأكيد الاسم والبدء</>}
         </Button>
-
         <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5">
           <Lock className="h-3.5 w-3.5" />
           يُحفظ الاسم مرة واحدة فقط — لا يمكن تغييره بدون دفع
@@ -134,7 +121,6 @@ function NameEntryScreen({
   );
 }
 
-// ── Locked Name Badge ─────────────────────────────────────────────────────────
 function LockedNameBadge({ name, onChangeRequest }: { name: string; onChangeRequest: () => void }) {
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -154,9 +140,8 @@ function LockedNameBadge({ name, onChangeRequest }: { name: string; onChangeRequ
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
 export default function ResumeBuilder() {
-  const { currentUser, userProfile } = useAuth();
+  const { userProfile, refreshProfile } = useAuth();
   const { t } = useTranslation();
   const [, navigate] = useLocation();
 
@@ -171,14 +156,12 @@ export default function ResumeBuilder() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Sync locked name from profile (after Auth loads)
   useEffect(() => {
     if (userProfile?.resumeName && !lockedName) {
       setLockedName(userProfile.resumeName);
     }
   }, [userProfile?.resumeName]);
 
-  // Init chat once name is locked
   useEffect(() => {
     if (lockedName && messages.length === 0) {
       setMessages([
@@ -197,10 +180,11 @@ export default function ResumeBuilder() {
   }, [messages]);
 
   const handleNameConfirm = async (name: string) => {
-    if (!currentUser) return;
+    if (!userProfile?.id) return;
     setSavingName(true);
     try {
-      await setResumeName(currentUser.uid, name);
+      await api.users.updateMe({ resumeName: name });
+      await refreshProfile();
       setLockedName(name);
     } catch (e: any) {
       console.error("Failed to save resume name", e);
@@ -243,6 +227,7 @@ export default function ResumeBuilder() {
       const res = await fetch(PROXY_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ webhook_url: N8N_WEBHOOK, ...payload }),
       });
 
@@ -352,7 +337,6 @@ export default function ResumeBuilder() {
     setInput("");
   };
 
-  // ── Render: name entry screen ─────────────────────────────────────────────
   if (!lockedName) {
     return (
       <Layout>
@@ -361,12 +345,9 @@ export default function ResumeBuilder() {
     );
   }
 
-  // ── Render: chat UI ───────────────────────────────────────────────────────
   return (
     <Layout>
       <div className="flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-7rem)] max-w-3xl mx-auto">
-
-        {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b mb-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -377,18 +358,12 @@ export default function ResumeBuilder() {
               <LockedNameBadge name={lockedName} onChangeRequest={handleNameChangeRequest} />
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={resetChat}
-            className="gap-2 text-muted-foreground"
-          >
+          <Button variant="outline" size="sm" onClick={resetChat} className="gap-2 text-muted-foreground">
             <RefreshCw className="h-4 w-4" />
             محادثة جديدة
           </Button>
         </div>
 
-        {/* Download Banner */}
         {downloadInfo && (
           <div className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -407,7 +382,6 @@ export default function ResumeBuilder() {
           </div>
         )}
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-1">
           {messages.map((msg) => (
             <ChatBubble key={msg.id} message={msg} />
@@ -416,7 +390,6 @@ export default function ResumeBuilder() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input Area */}
         <div className="pt-4 border-t">
           <div className="flex items-end gap-2 bg-background rounded-xl border shadow-sm p-2">
             <Textarea
@@ -448,7 +421,6 @@ export default function ResumeBuilder() {
   );
 }
 
-// ── Chat Bubble ────────────────────────────────────────────────────────────────
 function ChatBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
   return (
@@ -484,7 +456,6 @@ function ChatBubble({ message }: { message: Message }) {
   );
 }
 
-// ── Typing Indicator ──────────────────────────────────────────────────────────
 function TypingIndicator() {
   return (
     <div className="flex gap-3 items-start">
@@ -502,7 +473,6 @@ function TypingIndicator() {
   );
 }
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
 function base64ToBlob(base64: string, type: string): Blob {
   const byteChars = atob(base64);
   const byteNums = new Array(byteChars.length);
