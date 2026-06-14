@@ -75,6 +75,11 @@ export const api = {
     update: (patch: Record<string, unknown>) =>
       request<any>("/settings", { method: "PATCH", body: JSON.stringify(patch) }),
   },
+  pricing: {
+    get: () => fetch("/api/pricing-config").then(r => r.json()),
+    update: (patch: Record<string, unknown>) =>
+      request<any>("/pricing-config", { method: "PATCH", body: JSON.stringify(patch) }),
+  },
   n8nProxy: (webhookUrl: string, body: Record<string, unknown>) =>
     request<any>("/n8n-proxy", { method: "POST", body: JSON.stringify({ webhook_url: webhookUrl, ...body }) }),
 };

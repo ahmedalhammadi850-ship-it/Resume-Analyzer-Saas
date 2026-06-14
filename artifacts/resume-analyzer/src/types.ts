@@ -71,3 +71,18 @@ export const N8N_WEBHOOK_CREATE_CV =
 export const FREE_PLAN_LIMIT = 1;
 export const STARTER_PLAN_LIMIT = 7;
 export const PRO_PLAN_LIMIT = 25;
+
+export interface PlanConfig {
+  price: number;
+  scanLimit: number;
+  billing: string;
+  visible: boolean;
+  mostPopular: boolean;
+  features: string[];
+}
+
+export interface PricingConfig {
+  free: PlanConfig;
+  starter: PlanConfig;
+  pro: PlanConfig;
+}

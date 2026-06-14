@@ -14,9 +14,13 @@ import {
   Users, FileText, DollarSign, TrendingUp, ShieldAlert, Trash2, Ban,
   PlusCircle, CheckCircle2, XCircle, Clock, RefreshCw, Settings,
   Lock, Unlock, Loader2, Crown, UserCheck, UserX, ShieldCheck, Shield,
-  BarChart3, AlertTriangle
+  BarChart3, AlertTriangle, Tag, Plus, Minus, Eye, EyeOff, Star, Save
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
+import { type PricingConfig } from "@/types";
+import { invalidatePricingCache } from "@/hooks/usePricing";
 
 export default function Admin() {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -31,12 +35,16 @@ export default function Admin() {
   const [appSettings, setAppSettings] = useState<AppSettings>({ resumeNameChangeFree: false });
   const [savingSettings, setSavingSettings] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [pricingConfig, setPricingConfig] = useState<PricingConfig | null>(null);
+  const [editingPricing, setEditingPricing] = useState<PricingConfig | null>(null);
+  const [savingPricing, setSavingPricing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadData();
     loadUpgradeRequests();
     loadAppSettings();
+    loadPricing();
   }, []);
 
   async function loadAppSettings() {
@@ -44,6 +52,61 @@ export default function Admin() {
       const s = await api.settings.get();
       setAppSettings(s);
     } catch {}
+  }
+
+  async function loadPricing() {
+    try {
+      const p = await api.pricing.get();
+      setPricingConfig(p);
+      setEditingPricing(JSON.parse(JSON.stringify(p)));
+    } catch {}
+  }
+
+  async function savePricing() {
+    if (!editingPricing) return;
+    setSavingPricing(true);
+    try {
+      const updated = await api.pricing.update(editingPricing as any);
+      setPricingConfig(updated);
+      setEditingPricing(JSON.parse(JSON.stringify(updated)));
+      invalidatePricingCache();
+      toast({ title: "✅ تم حفظ إعدادات التسعير" });
+    } catch (e: any) {
+      toast({ title: "فشل الحفظ", description: e.message, variant: "destructive" });
+    } finally {
+      setSavingPricing(false);
+    }
+  }
+
+  function updatePlanField(plan: keyof PricingConfig, field: string, value: unknown) {
+    setEditingPricing(prev => {
+      if (!prev) return prev;
+      return { ...prev, [plan]: { ...prev[plan], [field]: value } };
+    });
+  }
+
+  function updateFeature(plan: keyof PricingConfig, idx: number, value: string) {
+    setEditingPricing(prev => {
+      if (!prev) return prev;
+      const features = [...prev[plan].features];
+      features[idx] = value;
+      return { ...prev, [plan]: { ...prev[plan], features } };
+    });
+  }
+
+  function addFeature(plan: keyof PricingConfig) {
+    setEditingPricing(prev => {
+      if (!prev) return prev;
+      return { ...prev, [plan]: { ...prev[plan], features: [...prev[plan].features, ""] } };
+    });
+  }
+
+  function removeFeature(plan: keyof PricingConfig, idx: number) {
+    setEditingPricing(prev => {
+      if (!prev) return prev;
+      const features = prev[plan].features.filter((_, i) => i !== idx);
+      return { ...prev, [plan]: { ...prev[plan], features } };
+    });
   }
 
   async function toggleSetting(key: keyof AppSettings) {
@@ -241,7 +304,7 @@ export default function Admin() {
 
         {/* Tabs */}
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
               المستخدمون
@@ -251,6 +314,10 @@ export default function Admin() {
               <Crown className="h-4 w-4" />
               طلبات الترقية
               {pendingCount > 0 && <span className="h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-bold">{pendingCount}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="pricing" className="gap-2">
+              <Tag className="h-4 w-4" />
+              الأسعار
             </TabsTrigger>
             <TabsTrigger value="system" className="gap-2">
               <Settings className="h-4 w-4" />
@@ -474,6 +541,171 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Pricing Tab */}
+          <TabsContent value="pricing" className="mt-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">إدارة خطط التسعير</h2>
+                <p className="text-sm text-muted-foreground">التغييرات تنعكس فوراً على صفحة التسعير العامة.</p>
+              </div>
+              <Button onClick={savePricing} disabled={savingPricing || !editingPricing} className="gap-2">
+                {savingPricing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                حفظ التغييرات
+              </Button>
+            </div>
+
+            {!editingPricing ? (
+              <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-5">
+                {(["free", "starter", "pro"] as const).map(plan => {
+                  const p = editingPricing[plan];
+                  const planColors: Record<string, string> = {
+                    free: "border-border",
+                    starter: "border-amber-400",
+                    pro: "border-primary",
+                  };
+                  const planLabels: Record<string, string> = {
+                    free: "مجاني",
+                    starter: "Starter",
+                    pro: "Pro",
+                  };
+                  return (
+                    <Card key={plan} className={`border-2 ${planColors[plan]}`}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base">{planLabels[plan]}</CardTitle>
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`visible-${plan}`} className="text-xs text-muted-foreground">ظاهر</Label>
+                            <Switch
+                              id={`visible-${plan}`}
+                              checked={p.visible}
+                              onCheckedChange={v => updatePlanField(plan, "visible", v)}
+                            />
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Price */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">السعر ($)</Label>
+                            <Input
+                              type="number" min="0" step="0.5"
+                              value={p.price}
+                              onChange={e => updatePlanField(plan, "price", parseFloat(e.target.value) || 0)}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">عدد الفحوصات</Label>
+                            <Input
+                              type="number" min="0"
+                              value={p.scanLimit}
+                              onChange={e => updatePlanField(plan, "scanLimit", parseInt(e.target.value) || 0)}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Billing label */}
+                        <div className="space-y-1">
+                          <Label className="text-xs">نوع الفوترة</Label>
+                          <select
+                            value={p.billing}
+                            onChange={e => updatePlanField(plan, "billing", e.target.value)}
+                            className="w-full h-8 rounded-md border border-input bg-background px-3 text-sm"
+                          >
+                            <option value="forever">مجاني للأبد</option>
+                            <option value="one-time">دفعة واحدة</option>
+                            <option value="/month">شهرياً</option>
+                            <option value="/year">سنوياً</option>
+                          </select>
+                        </div>
+
+                        {/* Toggles */}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
+                              <Star className="h-3.5 w-3.5" />الأكثر شيوعاً
+                            </span>
+                            <Switch
+                              checked={p.mostPopular}
+                              onCheckedChange={v => updatePlanField(plan, "mostPopular", v)}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Features */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs">المزايا</Label>
+                            <Button size="sm" variant="ghost" className="h-6 px-2 text-xs gap-1" onClick={() => addFeature(plan)}>
+                              <Plus className="h-3 w-3" /> إضافة
+                            </Button>
+                          </div>
+                          <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                            {p.features.map((f, i) => (
+                              <div key={i} className="flex items-center gap-1">
+                                <Input
+                                  value={f}
+                                  onChange={e => updateFeature(plan, i, e.target.value)}
+                                  className="h-7 text-xs flex-1"
+                                  placeholder={`ميزة ${i + 1}`}
+                                />
+                                <Button
+                                  size="icon" variant="ghost" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                  onClick={() => removeFeature(plan, i)}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Preview badge */}
+                        <div className={`text-xs rounded-md p-2 text-center font-medium ${p.visible ? "bg-green-50 text-green-700 dark:bg-green-900/20" : "bg-muted text-muted-foreground"}`}>
+                          {p.visible ? <><Eye className="inline h-3 w-3 me-1" />ظاهر للزوار</> : <><EyeOff className="inline h-3 w-3 me-1" />مخفي</>}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Live preview summary */}
+            {editingPricing && (
+              <Card className="bg-muted/40 border-dashed">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Eye className="h-4 w-4" /> معاينة — كيف ستظهر للزوار
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-6 flex-wrap">
+                    {(["free", "starter", "pro"] as const).map(plan => {
+                      const p = editingPricing[plan];
+                      if (!p.visible) return null;
+                      const labels = { free: "مجاني", starter: "Starter", pro: "Pro" };
+                      const billing = p.billing === "forever" ? "للأبد" : p.billing === "one-time" ? "مرة واحدة" : p.billing;
+                      return (
+                        <div key={plan} className="flex items-baseline gap-2 border rounded-md px-4 py-2 bg-background">
+                          <span className="font-bold">{labels[plan]}</span>
+                          <span className="text-xl font-black">${p.price}</span>
+                          <span className="text-xs text-muted-foreground">{billing}</span>
+                          <span className="text-xs text-muted-foreground">· {p.scanLimit} فحص</span>
+                          {p.mostPopular && <Badge className="text-[10px] h-4">الأكثر شيوعاً</Badge>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* System Settings Tab */}
