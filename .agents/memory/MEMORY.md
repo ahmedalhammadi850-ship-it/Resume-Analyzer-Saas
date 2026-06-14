@@ -1,1 +1,2 @@
 - [Firebase→Replit migration](firebase-replit-migration.md) — Firebase Auth + Firestore replaced with Replit Auth + PostgreSQL (Drizzle); pg must be added as direct dep to api-server and externalized in build.mjs
+- [Firebase Auth setup](firebase-auth-setup.md) — Full Firebase Auth (Email+Password + Google) replacing Replit Auth; stateless Bearer tokens; VITE_FIREBASE_API_KEY is separate from GOOGLE_API_KEY secret (Vite needs VITE_ prefix)
