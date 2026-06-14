@@ -73,7 +73,7 @@ export default function Settings() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                You are signed in via Replit. To manage your account or change your profile, visit your Replit settings.
+                You are signed in via Firebase Authentication. To change your password, use the forgot password flow on the login page.
               </p>
             </CardContent>
           </Card>

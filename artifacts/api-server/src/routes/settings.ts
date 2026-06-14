@@ -1,21 +1,10 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { usersTable, appSettingsTable } from "@workspace/db/schema";
+import { appSettingsTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
-import { ADMIN_EMAILS } from "../lib/constants.js";
+import { requireAdmin } from "../lib/auth-middleware.js";
 
 const router = Router();
-
-async function requireAdmin(req: any, res: any, next: any) {
-  const userId = (req.session as any)?.userId;
-  if (!userId) { res.status(401).json({ error: "Not authenticated" }); return; }
-  const users = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-  const user = users[0];
-  if (!user || (user.role !== "admin" && !ADMIN_EMAILS.includes(user.email))) {
-    res.status(403).json({ error: "Forbidden" }); return;
-  }
-  next();
-}
 
 router.get("/settings", async (_req, res) => {
   try {

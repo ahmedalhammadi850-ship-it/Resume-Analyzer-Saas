@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
-  const { userProfile, loading } = useAuth();
+  const { firebaseUser, userProfile, loading } = useAuth();
   const [, setLocation] = useLocation();
 
   const isAdmin =
@@ -21,27 +21,27 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!loading) {
-      if (!userProfile) {
-        (window.top || window).location.href = "/api/replit-auth/login";
-      } else if (!hasAccess) {
+      if (!firebaseUser) {
+        setLocation("/login");
+      } else if (userProfile && !hasAccess) {
         setLocation("/dashboard");
       }
     }
-  }, [loading, userProfile, hasAccess, setLocation]);
+  }, [loading, firebaseUser, userProfile, hasAccess, setLocation]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse flex flex-col items-center space-y-4">
-          <div className="h-12 w-12 bg-primary/20 rounded-full animate-spin"></div>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           <div className="text-muted-foreground font-medium">Loading...</div>
         </div>
       </div>
     );
   }
 
-  if (!userProfile) return null;
-  if (!hasAccess) return null;
+  if (!firebaseUser) return null;
+  if (userProfile && !hasAccess) return null;
 
   return <>{children}</>;
 }

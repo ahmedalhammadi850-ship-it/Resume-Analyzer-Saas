@@ -1,10 +1,27 @@
+import { auth } from "@/firebase";
+
 const BASE = "/api";
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const user = auth.currentUser;
+  if (!user) return {};
+  try {
+    const token = await user.getIdToken();
+    return { Authorization: `Bearer ${token}` };
+  } catch {
+    return {};
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const authHeaders = await getAuthHeaders();
   const res = await fetch(`${BASE}${path}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+      ...(options?.headers ?? {}),
+    },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -16,11 +33,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   auth: {
     me: () => request<any>("/auth/me"),
-    register: (id: string, name: string, email: string) =>
-      request<any>("/auth/register", { method: "POST", body: JSON.stringify({ id, name, email }) }),
-    login: (id: string) =>
-      request<any>("/auth/login", { method: "POST", body: JSON.stringify({ id }) }),
-    logout: () => request<any>("/auth/logout", { method: "POST" }),
   },
   users: {
     me: () => request<any>("/users/me"),

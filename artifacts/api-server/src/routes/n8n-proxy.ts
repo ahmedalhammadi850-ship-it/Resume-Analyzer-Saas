@@ -1,14 +1,7 @@
 import { Router } from "express";
+import { requireAuth } from "../lib/auth-middleware.js";
 
 const router = Router();
-
-function requireAuth(req: any, res: any, next: any) {
-  if (!(req.session as any)?.userId) {
-    res.status(401).json({ error: "Not authenticated" });
-    return;
-  }
-  next();
-}
 
 router.post("/n8n-proxy", requireAuth, async (req, res) => {
   const { webhook_url, ...body } = req.body as { webhook_url: string; [key: string]: unknown };
@@ -39,12 +32,7 @@ router.post("/n8n-proxy", requireAuth, async (req, res) => {
       const disposition: string = n8nRes.headers.get("content-disposition") ?? "";
       const nameMatch = disposition.match(/filename[^;=\n]*=([^;\n]*)/);
       const fileName = nameMatch ? nameMatch[1].replace(/['"]/g, "").trim() : "resume.pdf";
-      res.status(200).json({
-        type: "file",
-        base64,
-        mimeType: contentType.split(";")[0].trim(),
-        fileName,
-      });
+      res.status(200).json({ type: "file", base64, mimeType: contentType.split(";")[0].trim(), fileName });
       return;
     }
 
@@ -52,12 +40,7 @@ router.post("/n8n-proxy", requireAuth, async (req, res) => {
 
     if (rawText.startsWith("%PDF") || rawText.includes("%%EOF")) {
       const base64 = Buffer.from(rawText, "binary").toString("base64");
-      res.status(200).json({
-        type: "file",
-        base64,
-        mimeType: "application/pdf",
-        fileName: "resume.pdf",
-      });
+      res.status(200).json({ type: "file", base64, mimeType: "application/pdf", fileName: "resume.pdf" });
       return;
     }
 

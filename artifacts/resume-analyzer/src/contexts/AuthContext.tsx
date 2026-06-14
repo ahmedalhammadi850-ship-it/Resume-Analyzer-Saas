@@ -1,4 +1,10 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  onAuthStateChanged,
+  signOut as firebaseSignOut,
+  type User as FirebaseUser,
+} from "firebase/auth";
+import { auth } from "@/firebase";
 import { api } from "@/lib/api";
 
 export interface UserProfile {
@@ -13,6 +19,7 @@ export interface UserProfile {
 }
 
 interface AuthContextType {
+  firebaseUser: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
   logout: () => Promise<void>;
@@ -28,33 +35,46 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async () => {
     try {
-      const user = await api.auth.me();
-      setUserProfile(user);
+      const profile = await api.auth.me();
+      setUserProfile(profile);
     } catch {
       setUserProfile(null);
     }
   }, []);
 
   useEffect(() => {
-    fetchProfile().finally(() => setLoading(false));
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+      if (fbUser) {
+        await fetchProfile();
+      } else {
+        setUserProfile(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
   }, [fetchProfile]);
 
   async function logout() {
-    await api.auth.logout();
+    await firebaseSignOut(auth);
+    setFirebaseUser(null);
     setUserProfile(null);
   }
 
   async function refreshProfile() {
-    await fetchProfile();
+    if (firebaseUser) {
+      await fetchProfile();
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ userProfile, loading, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ firebaseUser, userProfile, loading, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
