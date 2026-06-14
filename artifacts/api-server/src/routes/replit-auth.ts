@@ -9,10 +9,16 @@ const router = Router();
 
 router.get("/replit-auth/login", (req: any, res: any) => {
   const returnTo = (req.query?.returnTo as string) || "/dashboard";
-  const host = req.headers?.host || req.hostname || "";
-  const protocol = (req.headers?.["x-forwarded-proto"] as string) || "https";
-  const returnUrl = encodeURIComponent(`${protocol}://${host}${returnTo}`);
-  res.redirect(`https://replit.com/login?goto=${returnUrl}`);
+  // Prefer REPLIT_DEV_DOMAIN / REPLIT_DOMAINS env vars (always correct in Replit)
+  // Fall back to x-forwarded-host then host header
+  const replitDomain = process.env.REPLIT_DEV_DOMAIN
+    || (process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(",")[0].trim() : null);
+  const rawHost = req.headers?.["x-forwarded-host"] || req.headers?.host || req.hostname || "";
+  const fallbackDomain = (Array.isArray(rawHost) ? rawHost[0] : rawHost).split(":")[0];
+  const domain = replitDomain || fallbackDomain;
+  res.redirect(
+    `https://replit.com/auth_with_repl_site?domain=${encodeURIComponent(domain)}&return_to=${encodeURIComponent(returnTo)}`
+  );
 });
 
 router.get("/replit-auth/logout", (req: any, res: any) => {
@@ -30,7 +36,7 @@ export async function replitAuthMiddleware(req: any, res: any, next: any) {
 
   const id = String(userInfo.id);
   const name = (userInfo as any).name || (userInfo as any).username || "User";
-  const email = `${(userInfo as any).name || id}@users.replit.com`;
+  const email = (userInfo as any).email || `${(userInfo as any).username || id}@users.replit.com`;
 
   try {
     const existing = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
