@@ -159,6 +159,60 @@ router.patch("/admin/upgrade-requests/:requestId/reject", requireAdmin, async (r
   }
 });
 
+router.patch("/admin/users/:uid/role", requireAdmin, async (req, res) => {
+  const { role } = req.body as { role: string };
+  if (!["user", "admin"].includes(role)) {
+    res.status(400).json({ error: "Invalid role" }); return;
+  }
+  try {
+    const [user] = await db.update(usersTable).set({ role }).where(eq(usersTable.id, req.params.uid)).returning();
+    res.json(user);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch("/admin/users/:uid/plan", requireAdmin, async (req, res) => {
+  const { plan } = req.body as { plan: string };
+  if (!["free", "pro"].includes(plan)) {
+    res.status(400).json({ error: "Invalid plan" }); return;
+  }
+  try {
+    const users = await db.select().from(usersTable).where(eq(usersTable.id, req.params.uid)).limit(1);
+    if (!users.length) { res.status(404).json({ error: "User not found" }); return; }
+    const [user] = await db.update(usersTable).set({
+      plan,
+      remainingScans: plan === "pro" ? 25 : 1,
+    }).where(eq(usersTable.id, req.params.uid)).returning();
+    res.json(user);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch("/admin/users/:uid/unsuspend", requireAdmin, async (req, res) => {
+  try {
+    const [user] = await db.update(usersTable).set({ suspended: false }).where(eq(usersTable.id, req.params.uid)).returning();
+    res.json(user);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/admin/setup", requireAuth, async (req, res) => {
+  const userId = (req.session as any).userId;
+  try {
+    const admins = await db.select().from(usersTable).where(eq(usersTable.role, "admin"));
+    if (admins.length > 0) {
+      res.status(403).json({ error: "Admin already exists" }); return;
+    }
+    const [user] = await db.update(usersTable).set({ role: "admin" }).where(eq(usersTable.id, userId)).returning();
+    res.json({ ok: true, user });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post("/users/upgrade-request", requireAuth, async (req, res) => {
   const userId = (req.session as any).userId;
   const { n8nSent } = req.body as { n8nSent?: boolean };

@@ -41,15 +41,22 @@ export const api = {
     users: () => request<any[]>("/admin/users"),
     suspendUser: (uid: string) =>
       request<any>(`/admin/users/${uid}/suspend`, { method: "PATCH" }),
+    unsuspendUser: (uid: string) =>
+      request<any>(`/admin/users/${uid}/unsuspend`, { method: "PATCH" }),
     deleteUser: (uid: string) =>
       request<any>(`/admin/users/${uid}`, { method: "DELETE" }),
     addScans: (uid: string, amount: number) =>
       request<any>(`/admin/users/${uid}/scans`, { method: "PATCH", body: JSON.stringify({ amount }) }),
+    changeRole: (uid: string, role: string) =>
+      request<any>(`/admin/users/${uid}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
+    changePlan: (uid: string, plan: string) =>
+      request<any>(`/admin/users/${uid}/plan`, { method: "PATCH", body: JSON.stringify({ plan }) }),
     upgradeRequests: () => request<any[]>("/admin/upgrade-requests"),
     approveUpgrade: (requestId: string) =>
       request<any>(`/admin/upgrade-requests/${requestId}/approve`, { method: "PATCH" }),
     rejectUpgrade: (requestId: string) =>
       request<any>(`/admin/upgrade-requests/${requestId}/reject`, { method: "PATCH" }),
+    setup: () => request<any>("/admin/setup"),
   },
   settings: {
     get: () => request<any>("/settings"),

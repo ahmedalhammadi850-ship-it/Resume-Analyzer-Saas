@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
-  const { currentUser } = useAuth();
+  const { userProfile } = useAuth();
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background selection:bg-primary selection:text-primary-foreground">
@@ -31,7 +31,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
             <div className="hidden md:block w-px h-5 bg-border mx-1" />
             <LanguageToggle />
             <ThemeToggle />
-            {currentUser ? (
+            {userProfile ? (
               <Button asChild variant="default" size="sm">
                 <Link href="/dashboard">{t("nav.dashboard")}</Link>
               </Button>
