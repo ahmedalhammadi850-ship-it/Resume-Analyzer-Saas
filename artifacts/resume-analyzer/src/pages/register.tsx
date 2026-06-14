@@ -11,7 +11,7 @@ export default function Register() {
       if (userProfile) {
         setLocation("/dashboard");
       } else {
-        window.location.href = "/api/replit-auth/login";
+        (window.top || window).location.href = "/api/replit-auth/login";
       }
     }
   }, [loading, userProfile, setLocation]);

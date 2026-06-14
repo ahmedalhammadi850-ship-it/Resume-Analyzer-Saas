@@ -22,7 +22,7 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
   useEffect(() => {
     if (!loading) {
       if (!userProfile) {
-        window.location.href = "/api/replit-auth/login";
+        (window.top || window).location.href = "/api/replit-auth/login";
       } else if (!hasAccess) {
         setLocation("/dashboard");
       }

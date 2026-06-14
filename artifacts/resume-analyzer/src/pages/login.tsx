@@ -19,7 +19,7 @@ export default function Login() {
   }, [loading, userProfile, setLocation]);
 
   const handleLogin = () => {
-    window.location.href = "/api/replit-auth/login";
+    (window.top || window).location.href = "/api/replit-auth/login";
   };
 
   return (
