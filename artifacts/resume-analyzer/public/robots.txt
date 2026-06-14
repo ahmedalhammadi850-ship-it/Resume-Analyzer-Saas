@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://cv-audit-tool.vercel.app/sitemap.xml
