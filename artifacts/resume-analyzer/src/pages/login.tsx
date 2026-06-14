@@ -38,7 +38,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       setLocation("/dashboard");
     } catch (err: any) {
-      setError(getErrorMessage(err.code));
+      setError(getErrorMessage(err.code, err.message));
     } finally {
       setSubmitting(false);
     }
@@ -53,14 +53,14 @@ export default function Login() {
       setLocation("/dashboard");
     } catch (err: any) {
       if (err.code !== "auth/popup-closed-by-user") {
-        setError(getErrorMessage(err.code));
+        setError(getErrorMessage(err.code, err.message));
       }
     } finally {
       setSubmitting(false);
     }
   }
 
-  function getErrorMessage(code: string): string {
+  function getErrorMessage(code: string, message?: string): string {
     switch (code) {
       case "auth/user-not-found":
       case "auth/wrong-password":
@@ -70,8 +70,15 @@ export default function Login() {
         return "Too many attempts. Please try again later.";
       case "auth/user-disabled":
         return "This account has been disabled.";
+      case "auth/operation-not-allowed":
+        return "Email/password sign-in is not enabled. Please contact support.";
+      case "auth/network-request-failed":
+        return "Network error. Please check your connection and try again.";
+      case "auth/api-key-not-valid":
+      case "auth/invalid-api-key":
+        return "Authentication configuration error. Please contact support.";
       default:
-        return "An error occurred. Please try again.";
+        return message || `Error (${code}). Please try again.`;
     }
   }
 

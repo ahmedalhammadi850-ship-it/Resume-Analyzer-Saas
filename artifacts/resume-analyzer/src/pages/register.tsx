@@ -43,7 +43,7 @@ export default function Register() {
       }
       setLocation("/dashboard");
     } catch (err: any) {
-      setError(getErrorMessage(err.code));
+      setError(getErrorMessage(err.code, err.message));
     } finally {
       setSubmitting(false);
     }
@@ -58,14 +58,14 @@ export default function Register() {
       setLocation("/dashboard");
     } catch (err: any) {
       if (err.code !== "auth/popup-closed-by-user") {
-        setError(getErrorMessage(err.code));
+        setError(getErrorMessage(err.code, err.message));
       }
     } finally {
       setSubmitting(false);
     }
   }
 
-  function getErrorMessage(code: string): string {
+  function getErrorMessage(code: string, message?: string): string {
     switch (code) {
       case "auth/email-already-in-use":
         return "An account with this email already exists.";
@@ -73,8 +73,17 @@ export default function Register() {
         return "Password must be at least 6 characters.";
       case "auth/invalid-email":
         return "Please enter a valid email address.";
+      case "auth/operation-not-allowed":
+        return "Email/password sign-up is not enabled. Please contact support.";
+      case "auth/network-request-failed":
+        return "Network error. Please check your connection and try again.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Please try again later.";
+      case "auth/api-key-not-valid":
+      case "auth/invalid-api-key":
+        return "Authentication configuration error. Please contact support.";
       default:
-        return "An error occurred. Please try again.";
+        return message || `Error (${code}). Please try again.`;
     }
   }
 
