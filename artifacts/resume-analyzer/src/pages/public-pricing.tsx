@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function PublicPricing() {
   const { t } = useTranslation();
-  const { currentUser, userProfile } = useAuth();
+  const { userProfile } = useAuth();
 
   const isPro = userProfile?.plan === "pro";
   const isStarter = userProfile?.plan === "starter";
@@ -80,7 +80,7 @@ export default function PublicPricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                {currentUser ? (
+                {userProfile ? (
                   <Button variant="outline" className="w-full" asChild>
                     <Link href="/dashboard">{t("pubPricing.goToDashboard")}</Link>
                   </Button>
@@ -114,11 +114,11 @@ export default function PublicPricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                {currentUser && isStarter ? (
+                {userProfile && isStarter ? (
                   <Button className="w-full h-12 text-base font-semibold bg-amber-500 hover:bg-amber-600" disabled>
                     {t("dashPricing.currentPlanBtn")}
                   </Button>
-                ) : currentUser ? (
+                ) : userProfile ? (
                   <Button className="w-full h-12 text-base font-semibold bg-amber-500 hover:bg-amber-600" asChild>
                     <Link href="/upgrade">
                       {t("pricing.upgradeStarter")} <ArrowRight className="ms-2 h-4 w-4" />
@@ -159,11 +159,11 @@ export default function PublicPricing() {
                 </ul>
               </CardContent>
               <CardFooter>
-                {currentUser && isPro ? (
+                {userProfile && isPro ? (
                   <Button className="w-full h-12 text-base font-semibold" disabled>
                     {t("dashPricing.currentPlanBtn")}
                   </Button>
-                ) : currentUser ? (
+                ) : userProfile ? (
                   <Button className="w-full h-12 text-base font-semibold" asChild>
                     <Link href="/upgrade">
                       {t("pricing.upgradePro")} <ArrowRight className="ms-2 h-4 w-4" />
