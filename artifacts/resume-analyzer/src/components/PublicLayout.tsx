@@ -54,7 +54,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       <footer className="border-t bg-muted/50">
-        <div className="container py-12 md:py-16 lg:py-20">
+        <div className="container px-10 py-12 md:py-16 lg:py-20">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
             <div className="col-span-2">
               <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-primary mb-4">
