@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import {
-  createUserWithEmailAndPassword,
-  updateProfile,
   GoogleAuthProvider,
   signInWithRedirect,
+  signInWithCustomToken,
 } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,13 +36,20 @@ export default function Register() {
     setError("");
     setSubmitting(true);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      if (name.trim()) {
-        await updateProfile(cred.user, { displayName: name.trim() });
+      const res = await fetch("/api/auth/register-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Registration failed. Please try again.");
+        return;
       }
+      await signInWithCustomToken(auth, data.customToken);
       setLocation("/dashboard");
-    } catch (err: any) {
-      setError(getErrorMessage(err.code, err.message));
+    } catch {
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -56,30 +62,8 @@ export default function Register() {
       const provider = new GoogleAuthProvider();
       await signInWithRedirect(auth, provider);
     } catch (err: any) {
-      setError(getErrorMessage(err.code, err.message));
+      setError(err.message || "Google sign-in failed.");
       setSubmitting(false);
-    }
-  }
-
-  function getErrorMessage(code: string, message?: string): string {
-    switch (code) {
-      case "auth/email-already-in-use":
-        return "An account with this email already exists.";
-      case "auth/weak-password":
-        return "Password must be at least 6 characters.";
-      case "auth/invalid-email":
-        return "Please enter a valid email address.";
-      case "auth/operation-not-allowed":
-        return "Email/password sign-up is not enabled. Please contact support.";
-      case "auth/network-request-failed":
-        return "Network error. Please check your connection and try again.";
-      case "auth/too-many-requests":
-        return "Too many attempts. Please try again later.";
-      case "auth/api-key-not-valid":
-      case "auth/invalid-api-key":
-        return "Authentication configuration error. Please contact support.";
-      default:
-        return message || `Error (${code}). Please try again.`;
     }
   }
 

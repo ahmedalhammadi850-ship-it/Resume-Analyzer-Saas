@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import {
-  signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithRedirect,
+  signInWithCustomToken,
 } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,10 +35,20 @@ export default function Login() {
     setError("");
     setSubmitting(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const res = await fetch("/api/auth/login-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Login failed. Please try again.");
+        return;
+      }
+      await signInWithCustomToken(auth, data.customToken);
       setLocation("/dashboard");
-    } catch (err: any) {
-      setError(getErrorMessage(err.code, err.message));
+    } catch {
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -51,30 +61,8 @@ export default function Login() {
       const provider = new GoogleAuthProvider();
       await signInWithRedirect(auth, provider);
     } catch (err: any) {
-      setError(getErrorMessage(err.code, err.message));
+      setError(err.message || "Google sign-in failed.");
       setSubmitting(false);
-    }
-  }
-
-  function getErrorMessage(code: string, message?: string): string {
-    switch (code) {
-      case "auth/user-not-found":
-      case "auth/wrong-password":
-      case "auth/invalid-credential":
-        return "Invalid email or password.";
-      case "auth/too-many-requests":
-        return "Too many attempts. Please try again later.";
-      case "auth/user-disabled":
-        return "This account has been disabled.";
-      case "auth/operation-not-allowed":
-        return "Email/password sign-in is not enabled. Please contact support.";
-      case "auth/network-request-failed":
-        return "Network error. Please check your connection and try again.";
-      case "auth/api-key-not-valid":
-      case "auth/invalid-api-key":
-        return "Authentication configuration error. Please contact support.";
-      default:
-        return message || `Error (${code}). Please try again.`;
     }
   }
 
