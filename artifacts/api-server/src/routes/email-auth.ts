@@ -8,14 +8,70 @@ import { FREE_PLAN_LIMIT } from "../lib/constants.js";
 
 const router = Router();
 
-const SALT_ROUNDS = 10;
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-fallback-secret-change-in-prod";
 const JWT_EXPIRES_IN = "30d";
+const FIREBASE_API_KEY = process.env.VITE_FIREBASE_API_KEY;
 
 function issueToken(uid: string, email: string, name: string): string {
   return jwt.sign({ uid, email, name }, SESSION_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
+interface FirebaseSignUpResponse {
+  localId: string;
+  email: string;
+  idToken: string;
+  error?: { message: string };
+}
+
+interface FirebaseSignInResponse {
+  localId: string;
+  email: string;
+  displayName?: string;
+  idToken: string;
+  error?: { message: string };
+}
+
+/** إنشاء مستخدم في Firebase Auth عبر REST API */
+async function firebaseSignUp(email: string, password: string, displayName: string): Promise<FirebaseSignUpResponse | null> {
+  if (!FIREBASE_API_KEY) return null;
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, displayName, returnSecureToken: true }),
+      },
+    );
+    const data = await res.json() as FirebaseSignUpResponse;
+    if (!res.ok || data.error) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/** تسجيل دخول بالبريد + كلمة المرور عبر Firebase REST API */
+async function firebaseSignIn(email: string, password: string): Promise<FirebaseSignInResponse | null> {
+  if (!FIREBASE_API_KEY) return null;
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      },
+    );
+    const data = await res.json() as FirebaseSignInResponse;
+    if (!res.ok || data.error) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// ─── تسجيل حساب جديد ───────────────────────────────────────────────────────
 router.post("/auth/register-email", async (req, res) => {
   const { email, password, name } = req.body as {
     email?: string;
@@ -32,29 +88,40 @@ router.post("/auth/register-email", async (req, res) => {
     return;
   }
 
-  try {
-    const existing = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, email.toLowerCase()))
-      .limit(1);
+  const emailLower = email.toLowerCase();
+  const displayName = name?.trim() || emailLower.split("@")[0] || "User";
 
+  try {
+    // 1. تحقق من وجود المستخدم في DB
+    const existing = await db.select().from(usersTable).where(eq(usersTable.email, emailLower)).limit(1);
     if (existing.length > 0) {
       res.status(409).json({ error: "An account with this email already exists." });
       return;
     }
 
-    const uid = crypto.randomUUID();
-    const displayName = name?.trim() || email.split("@")[0] || "User";
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    let uid: string;
+    let passwordHash: string | undefined;
 
+    // 2. حاول إنشاء المستخدم في Firebase
+    const fbResult = await firebaseSignUp(emailLower, password, displayName);
+
+    if (fbResult) {
+      // Firebase أنشأ المستخدم — استخدم UID الخاص به
+      uid = fbResult.localId;
+    } else {
+      // Firebase غير متاح — استخدم bcrypt كـ fallback
+      uid = crypto.randomUUID();
+      passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    // 3. أنشئ المستخدم في DB
     const [user] = await db
       .insert(usersTable)
       .values({
         id: uid,
         name: displayName,
-        email: email.toLowerCase(),
-        passwordHash,
+        email: emailLower,
+        passwordHash: passwordHash ?? null,
         plan: "free",
         remainingScans: FREE_PLAN_LIMIT,
         role: "user",
@@ -68,6 +135,7 @@ router.post("/auth/register-email", async (req, res) => {
   }
 });
 
+// ─── تسجيل دخول ────────────────────────────────────────────────────────────
 router.post("/auth/login-email", async (req, res) => {
   const { email, password } = req.body as {
     email?: string;
@@ -79,13 +147,52 @@ router.post("/auth/login-email", async (req, res) => {
     return;
   }
 
-  try {
-    const users = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, email.toLowerCase()))
-      .limit(1);
+  const emailLower = email.toLowerCase();
 
+  try {
+    // 1. حاول التحقق عبر Firebase أولاً
+    const fbResult = await firebaseSignIn(emailLower, password);
+
+    if (fbResult) {
+      // Firebase نجح — ابحث أو أنشئ المستخدم في DB
+      const existing = await db.select().from(usersTable).where(eq(usersTable.id, fbResult.localId)).limit(1);
+
+      let user;
+      if (existing.length > 0) {
+        user = existing[0];
+        if (user.suspended) {
+          res.status(403).json({ error: "This account has been suspended." });
+          return;
+        }
+      } else {
+        // مستخدم Firebase موجود لكن ليس في DB — أنشئه
+        const byEmail = await db.select().from(usersTable).where(eq(usersTable.email, emailLower)).limit(1);
+        if (byEmail.length > 0) {
+          user = byEmail[0];
+          if (user.suspended) {
+            res.status(403).json({ error: "This account has been suspended." });
+            return;
+          }
+        } else {
+          const [newUser] = await db.insert(usersTable).values({
+            id: fbResult.localId,
+            name: fbResult.displayName || emailLower.split("@")[0] || "User",
+            email: emailLower,
+            plan: "free",
+            remainingScans: FREE_PLAN_LIMIT,
+            role: "user",
+          }).returning();
+          user = newUser;
+        }
+      }
+
+      const token = issueToken(user.id, user.email, user.name);
+      res.json({ token, user });
+      return;
+    }
+
+    // 2. Firebase فشل — جرّب bcrypt (مستخدمون قدامى)
+    const users = await db.select().from(usersTable).where(eq(usersTable.email, emailLower)).limit(1);
     if (users.length === 0) {
       res.status(401).json({ error: "Invalid email or password." });
       return;
