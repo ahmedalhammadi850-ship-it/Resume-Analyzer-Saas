@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireAuth } from "../_auth";
-import { getAdminFirestore } from "../_firebase-admin";
+import { requireAuth } from "./_auth";
+import { getAdminFirestore } from "./_firebase-admin";
 
 function cors(res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -15,24 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  const slug = (req.query.slug ?? []) as string[];
-  const id = slug[0];
-
-  if (id && req.method === "GET") {
-    try {
-      const db = getAdminFirestore();
-      const doc = await db.collection("analyses").doc(id).get();
-      if (!doc.exists) { res.status(404).json({ error: "Analysis not found" }); return; }
-      const data = doc.data()!;
-      if (data.userId !== user.uid) { res.status(403).json({ error: "Forbidden" }); return; }
-      res.status(200).json({ id: doc.id, ...data });
-    } catch (err: unknown) {
-      res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
-    }
-    return;
-  }
-
-  if (!id && req.method === "GET") {
+  if (req.method === "GET") {
     const limitParam = req.query.limit ? parseInt(req.query.limit as string) : undefined;
     try {
       const db = getAdminFirestore();
@@ -53,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  if (!id && req.method === "POST") {
+  if (req.method === "POST") {
     const { analysisType, fileName, results, score } = (req.body ?? {}) as {
       analysisType?: string; fileName?: string; results?: unknown; score?: number;
     };

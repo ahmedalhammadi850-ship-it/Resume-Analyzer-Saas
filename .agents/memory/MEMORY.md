@@ -1,4 +1,3 @@
-- [Firebase→Replit migration](firebase-replit-migration.md) — Firebase Auth + Firestore replaced with Replit Auth + PostgreSQL (Drizzle); pg must be added as direct dep to api-server and externalized in build.mjs
-- [No Firebase Admin SDK](no-firebase-admin-sdk.md) — FIREBASE_SERVICE_ACCOUNT eliminated; email/password uses bcrypt+JWT; Google uses Firebase REST API for token verification
 - [React navigation race condition](react-nav-race.md) — After setState in async handler, call setLocation only via useEffect watching state, not inline after setState; inline call navigates before React commits state updates
 - [Full Firestore migration complete](firestore-migration-complete.md) — All routes use Firestore; auth via verifyIdToken; frontend uses onAuthStateChanged; no PostgreSQL/Drizzle in api-server
+- [Vercel catch-all base path bug](vercel-catchall-base-path.md) — [[...slug]] optional catch-all does NOT reliably match the base path in Vercel; fix with explicit files
