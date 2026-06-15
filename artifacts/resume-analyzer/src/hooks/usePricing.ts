@@ -16,18 +16,20 @@ const DEFAULT_PRICING: PricingConfig = {
   },
 };
 
-let cached: PricingConfig | null = null;
+let cached: { data: PricingConfig; ts: number } | null = null;
+const CACHE_TTL_MS = 10_000;
 
 export function usePricing() {
-  const [pricing, setPricing] = useState<PricingConfig>(cached ?? DEFAULT_PRICING);
-  const [loading, setLoading] = useState(!cached);
+  const isValid = cached && Date.now() - cached.ts < CACHE_TTL_MS;
+  const [pricing, setPricing] = useState<PricingConfig>(isValid ? cached!.data : DEFAULT_PRICING);
+  const [loading, setLoading] = useState(!isValid);
 
   useEffect(() => {
-    if (cached) return;
+    if (isValid) return;
     fetch("/api/pricing-config")
       .then(r => r.json())
       .then(data => {
-        cached = data;
+        cached = { data, ts: Date.now() };
         setPricing(data);
       })
       .catch(() => {})

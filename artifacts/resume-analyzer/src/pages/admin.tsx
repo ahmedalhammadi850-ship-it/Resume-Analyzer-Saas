@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/Layout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { api } from "@/lib/api";
 import { AdminStats, UserProfile, UpgradeRequest, AppSettings } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,11 +14,9 @@ import {
   Users, FileText, DollarSign, TrendingUp, ShieldAlert, Trash2, Ban,
   PlusCircle, CheckCircle2, XCircle, Clock, RefreshCw, Settings,
   Lock, Unlock, Loader2, Crown, UserCheck, UserX, ShieldCheck, Shield,
-  BarChart3, AlertTriangle, Tag, Plus, Minus, Eye, EyeOff, Star, Save, LogOut,
+  BarChart3, AlertTriangle, Tag, Plus, Minus, Eye, EyeOff, Star, Save,
   Bell, Send, Sparkles, UserPlus
 } from "lucide-react";
-import { closeAdminGate } from "@/components/AdminLoginGate";
-import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -43,19 +41,14 @@ export default function Admin() {
   const [pricingConfig, setPricingConfig] = useState<PricingConfig | null>(null);
   const [editingPricing, setEditingPricing] = useState<PricingConfig | null>(null);
   const [savingPricing, setSavingPricing] = useState(false);
+  const [activeTab, setActiveTab] = useState("users");
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
 
   const [notifyDialog, setNotifyDialog] = useState<{ uid: string; name: string; email: string } | null>(null);
   const [notifyTitle, setNotifyTitle] = useState("");
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyType, setNotifyType] = useState("upgrade");
   const [sendingNotify, setSendingNotify] = useState(false);
-
-  function handleAdminLogout() {
-    closeAdminGate();
-    setLocation("/");
-  }
 
   function openNotifyDialog(user: any) {
     setNotifyDialog({ uid: user.id, name: user.name || user.email, email: user.email });
@@ -304,7 +297,7 @@ export default function Admin() {
   };
 
   return (
-    <Layout>
+    <AdminLayout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="space-y-8">
         {/* Notify Dialog */}
         <Dialog open={!!notifyDialog} onOpenChange={open => !open && setNotifyDialog(null)}>
@@ -375,22 +368,13 @@ export default function Admin() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <ShieldAlert className="h-8 w-8 text-destructive" />
-              لوحة الإدارة
-            </h1>
-            <p className="text-muted-foreground mt-1">نظرة شاملة على المنصة وإدارة المستخدمين.</p>
+            <h1 className="text-2xl font-bold tracking-tight">لوحة الإدارة</h1>
+            <p className="text-muted-foreground mt-1 text-sm">نظرة شاملة على المنصة وإدارة المستخدمين.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { loadData(); loadUpgradeRequests(); }} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? "animate-spin" : ""}`} />
-              تحديث
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleAdminLogout} className="text-muted-foreground hover:text-destructive">
-              <LogOut className="h-4 w-4 me-2" />
-              خروج
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={() => { loadData(); loadUpgradeRequests(); }} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? "animate-spin" : ""}`} />
+            تحديث
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -462,31 +446,7 @@ export default function Admin() {
         )}
 
         {/* Tabs */}
-        <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="h-4 w-4" />
-              المستخدمون
-              {isLoading ? null : <span className="h-5 min-w-5 px-1 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center">{users.length}</span>}
-            </TabsTrigger>
-            <TabsTrigger value="upgrades" className="gap-2">
-              <Crown className="h-4 w-4" />
-              طلبات الترقية
-              {pendingCount > 0 && <span className="h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-bold">{pendingCount}</span>}
-            </TabsTrigger>
-            <TabsTrigger value="pricing" className="gap-2">
-              <Tag className="h-4 w-4" />
-              الأسعار
-            </TabsTrigger>
-            <TabsTrigger value="system" className="gap-2">
-              <Settings className="h-4 w-4" />
-              الإعدادات
-            </TabsTrigger>
-            <TabsTrigger value="overview" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              نظرة عامة
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
           {/* Users Tab */}
           <TabsContent value="users" className="mt-4">
@@ -992,6 +952,6 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }
