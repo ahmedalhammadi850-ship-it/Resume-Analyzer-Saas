@@ -40,11 +40,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         db.collection("users").get(),
         db.collection("analyses").get(),
       ]);
-      const users = usersSnap.docs.map(d => d.data());
-      const activeSubscribers = users.filter(u => u.plan === "pro").length;
+      const users = usersSnap.docs.map((d: any) => d.data());
+      const activeSubscribers = users.filter((u: any) => u.plan === "pro").length;
       const monthStart = new Date();
       monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
-      const newThisMonth = users.filter(u => new Date(u.createdAt) >= monthStart).length;
+      const newThisMonth = users.filter((u: any) => new Date(u.createdAt) >= monthStart).length;
       res.status(200).json({
         totalUsers: users.length,
         totalAnalyses: analysesSnap.size,
@@ -61,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   if (section === "users" && !param1 && req.method === "GET") {
     try {
       const snap = await db.collection("users").orderBy("createdAt").get();
-      res.status(200).json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      res.status(200).json(snap.docs.map((d: any) => ({ id: d.id, ...d.data() })));
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }
@@ -173,7 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     try {
       const snap = await db.collection("users").get();
       const requests = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
+        .map((d: any) => ({ id: d.id, ...d.data() }))
         .filter((u: any) => u.upgradeRequest != null)
         .map((u: any) => {
           const r = u.upgradeRequest;
