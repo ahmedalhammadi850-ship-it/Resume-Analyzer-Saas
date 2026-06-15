@@ -21,6 +21,7 @@ import PublicPricing from "@/pages/public-pricing";
 import About from "@/pages/about";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
+import { AdminLoginGate } from "@/components/AdminLoginGate";
 import ResumeBuilder from "@/pages/resume-builder";
 import Upgrade from "@/pages/upgrade";
 import NotFound from "@/pages/not-found";
@@ -67,7 +68,7 @@ function Router() {
 
       {/* Admin Route */}
       <Route path="/admin">
-        <ProtectedRoute requireRole="admin"><Admin /></ProtectedRoute>
+        <AdminLoginGate><Admin /></AdminLoginGate>
       </Route>
 
       <Route component={NotFound} />

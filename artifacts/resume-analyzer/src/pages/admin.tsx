@@ -14,8 +14,10 @@ import {
   Users, FileText, DollarSign, TrendingUp, ShieldAlert, Trash2, Ban,
   PlusCircle, CheckCircle2, XCircle, Clock, RefreshCw, Settings,
   Lock, Unlock, Loader2, Crown, UserCheck, UserX, ShieldCheck, Shield,
-  BarChart3, AlertTriangle, Tag, Plus, Minus, Eye, EyeOff, Star, Save
+  BarChart3, AlertTriangle, Tag, Plus, Minus, Eye, EyeOff, Star, Save, LogOut
 } from "lucide-react";
+import { closeAdminGate } from "@/components/AdminLoginGate";
+import { useLocation } from "wouter";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
@@ -39,6 +41,12 @@ export default function Admin() {
   const [editingPricing, setEditingPricing] = useState<PricingConfig | null>(null);
   const [savingPricing, setSavingPricing] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  function handleAdminLogout() {
+    closeAdminGate();
+    setLocation("/");
+  }
 
   useEffect(() => {
     loadData();
@@ -271,10 +279,16 @@ export default function Admin() {
             </h1>
             <p className="text-muted-foreground mt-1">نظرة شاملة على المنصة وإدارة المستخدمين.</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => { loadData(); loadUpgradeRequests(); }} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? "animate-spin" : ""}`} />
-            تحديث
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => { loadData(); loadUpgradeRequests(); }} disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 me-2 ${isLoading ? "animate-spin" : ""}`} />
+              تحديث
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleAdminLogout} className="text-muted-foreground hover:text-destructive">
+              <LogOut className="h-4 w-4 me-2" />
+              خروج
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
