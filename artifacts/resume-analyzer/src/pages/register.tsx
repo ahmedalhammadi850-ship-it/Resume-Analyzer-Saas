@@ -4,7 +4,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
 } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,13 +54,9 @@ export default function Register() {
     setSubmitting(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      setLocation("/dashboard");
+      await signInWithRedirect(auth, provider);
     } catch (err: any) {
-      if (err.code !== "auth/popup-closed-by-user") {
-        setError(getErrorMessage(err.code, err.message));
-      }
-    } finally {
+      setError(getErrorMessage(err.code, err.message));
       setSubmitting(false);
     }
   }

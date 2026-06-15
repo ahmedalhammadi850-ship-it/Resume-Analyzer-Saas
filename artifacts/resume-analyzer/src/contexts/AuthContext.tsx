@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import {
   onAuthStateChanged,
   signOut as firebaseSignOut,
+  getRedirectResult,
   type User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "@/firebase";
@@ -49,6 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Handle redirect result from Google sign-in
+    getRedirectResult(auth).catch(() => {});
+
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
