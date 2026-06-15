@@ -1,0 +1,74 @@
+Failed to load resource: the server responded with a status of 404 ()
+index-CLw42ZiH.js:9 Failed to load recent analyses Error
+    at $e (index-CLw42ZiH.js:9:304323)
+    at async x (index-CLw42ZiH.js:9:344944)
+x @ index-CLw42ZiH.js:9
+api/notifications/unread-count:1  Failed to load resource: the server responded with a status of 500 ()
+api/notifications/unread-count:1  Failed to load resource: the server responded with a status of 500 ()
+api/analyses?limit=5:1  Failed to load resource: the server responded with a status of 404 ()
+index-CLw42ZiH.js:9 Failed to load recent analyses Error
+    at $e (index-CLw42ZiH.js:9:304323)
+    at async x (index-CLw42ZiH.js:9:344944)
+x @ index-CLw42ZiH.js:9
+api/notifications/unread-count:1  Failed to load resource: the server responded with a status of 500 ()
+api/notifications/unread-count:1  Failed to load resource: the server responded with a status of 500 ()
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9
+index-CLw42ZiH.js:9  GET https://cv-audit-tool.vercel.app/api/notifications/unread-count 500 (Internal Server Error)
+$e @ index-CLw42ZiH.js:9
+await in $e
+unreadCount @ index-CLw42ZiH.js:9
+v @ index-CLw42ZiH.js:9

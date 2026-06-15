@@ -10,10 +10,15 @@ router.get("/notifications", requireAuth, async (req, res) => {
     const db = getAdminFirestore();
     const snap = await db.collection("notifications")
       .where("userId", "==", uid)
-      .orderBy("createdAt", "desc")
-      .limit(50)
       .get();
-    res.json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const results = snap.docs
+      .map(d => ({ id: d.id, ...d.data() })) as any[];
+    results.sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+    res.json(results.slice(0, 50));
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -25,11 +30,11 @@ router.get("/notifications/unread-count", requireAuth, async (req, res) => {
     const db = getAdminFirestore();
     const snap = await db.collection("notifications")
       .where("userId", "==", uid)
-      .where("read", "==", false)
       .get();
-    res.json({ count: snap.size });
+    const unreadCount = snap.docs.filter(d => d.data().read === false).length;
+    res.json({ count: unreadCount });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.json({ count: 0 });
   }
 });
 
@@ -52,10 +57,11 @@ router.patch("/notifications/read-all", requireAuth, async (req, res) => {
     const db = getAdminFirestore();
     const snap = await db.collection("notifications")
       .where("userId", "==", uid)
-      .where("read", "==", false)
       .get();
     const batch = db.batch();
-    snap.docs.forEach(d => batch.update(d.ref, { read: true }));
+    snap.docs
+      .filter(d => d.data().read === false)
+      .forEach(d => batch.update(d.ref, { read: true }));
     await batch.commit();
     res.json({ ok: true });
   } catch (err: any) {

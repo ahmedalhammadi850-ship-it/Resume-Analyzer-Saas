@@ -9,12 +9,17 @@ router.get("/analyses", requireAuth, async (req, res) => {
   const limitParam = req.query.limit ? parseInt(req.query.limit as string) : undefined;
   try {
     const db = getAdminFirestore();
-    let query = db.collection("analyses")
+    const snap = await db.collection("analyses")
       .where("userId", "==", uid)
-      .orderBy("createdAt", "desc");
-    if (limitParam) query = query.limit(limitParam) as any;
-    const snap = await query.get();
-    res.json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      .get();
+    let results = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+    results.sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+    if (limitParam) results = results.slice(0, limitParam);
+    res.json(results);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
