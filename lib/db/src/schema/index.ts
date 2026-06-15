@@ -1,52 +1,44 @@
-import { pgTable, text, integer, jsonb, timestamp, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const usersTable = pgTable("users", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull().default(""),
-  email: text("email").notNull().default(""),
-  passwordHash: text("password_hash"),
-  plan: text("plan").notNull().default("free"),
-  remainingScans: integer("remaining_scans").notNull().default(1),
-  role: text("role").notNull().default("user"),
-  resumeName: text("resume_name"),
-  suspended: boolean("suspended").notNull().default(false),
-  upgradeRequest: jsonb("upgrade_request"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+export const userSchema = z.object({
+  id: z.string(),
+  name: z.string().default(""),
+  email: z.string().default(""),
+  plan: z.string().default("free"),
+  remainingScans: z.number().default(1),
+  role: z.string().default("user"),
+  resumeName: z.string().optional(),
+  suspended: z.boolean().default(false),
+  upgradeRequest: z.unknown().optional(),
+  createdAt: z.string(),
 });
 
-export const analysesTable = pgTable("analyses", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  analysisType: text("analysis_type").notNull(),
-  fileName: text("file_name").notNull(),
-  results: jsonb("results").notNull(),
-  score: integer("score").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+export const analysisSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  analysisType: z.string(),
+  fileName: z.string(),
+  results: z.unknown(),
+  score: z.number().default(0),
+  createdAt: z.string(),
 });
 
-export const appSettingsTable = pgTable("app_settings", {
-  key: text("key").primaryKey(),
-  value: jsonb("value").notNull(),
+export const appSettingSchema = z.object({
+  key: z.string(),
+  value: z.unknown(),
 });
 
-export const notificationsTable = pgTable("notifications", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  message: text("message").notNull(),
-  type: text("type").notNull().default("info"),
-  read: boolean("read").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+export const notificationSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  title: z.string(),
+  message: z.string(),
+  type: z.string().default("info"),
+  read: z.boolean().default(false),
+  createdAt: z.string(),
 });
 
-export const insertUserSchema = createInsertSchema(usersTable);
-export const insertAnalysisSchema = createInsertSchema(analysesTable).omit({ id: true });
-export const insertAppSettingSchema = createInsertSchema(appSettingsTable);
-
-export type User = typeof usersTable.$inferSelect;
-export type InsertUser = typeof usersTable.$inferInsert;
-export type Analysis = typeof analysesTable.$inferSelect;
-export type InsertAnalysis = typeof analysesTable.$inferInsert;
-export type AppSetting = typeof appSettingsTable.$inferSelect;
+export type User = z.infer<typeof userSchema>;
+export type Analysis = z.infer<typeof analysisSchema>;
+export type AppSetting = z.infer<typeof appSettingSchema>;
+export type Notification = z.infer<typeof notificationSchema>;
