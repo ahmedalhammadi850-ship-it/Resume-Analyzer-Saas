@@ -11,6 +11,9 @@
     "vercel-build": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run build"
   },
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "firebase-admin": "^14.0.0"
   },
