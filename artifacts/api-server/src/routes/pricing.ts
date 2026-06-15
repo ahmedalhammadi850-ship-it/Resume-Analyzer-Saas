@@ -1,7 +1,5 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { appSettingsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { getAdminFirestore } from "../lib/firebase-admin.js";
 import { requireAdmin } from "../lib/auth-middleware.js";
 
 const router = Router();
@@ -56,12 +54,9 @@ const DEFAULT_PRICING = {
 
 router.get("/pricing-config", async (_req, res) => {
   try {
-    const rows = await db.select().from(appSettingsTable).where(eq(appSettingsTable.key, "pricing")).limit(1);
-    if (rows.length) {
-      res.json(rows[0].value);
-    } else {
-      res.json(DEFAULT_PRICING);
-    }
+    const db = getAdminFirestore();
+    const doc = await db.collection("app_settings").doc("pricing").get();
+    res.json(doc.exists ? doc.data() : DEFAULT_PRICING);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -70,16 +65,16 @@ router.get("/pricing-config", async (_req, res) => {
 router.patch("/pricing-config", requireAdmin, async (req, res) => {
   const patch = req.body as Record<string, unknown>;
   try {
-    const existing = await db.select().from(appSettingsTable).where(eq(appSettingsTable.key, "pricing")).limit(1);
-    if (existing.length) {
-      const merged = { ...(existing[0].value as Record<string, unknown>), ...patch };
-      const [updated] = await db.update(appSettingsTable).set({ value: merged }).where(eq(appSettingsTable.key, "pricing")).returning();
-      res.json(updated.value);
+    const db = getAdminFirestore();
+    const ref = db.collection("app_settings").doc("pricing");
+    const doc = await ref.get();
+    if (doc.exists) {
+      await ref.update(patch);
     } else {
-      const merged = { ...DEFAULT_PRICING, ...patch };
-      const [created] = await db.insert(appSettingsTable).values({ key: "pricing", value: merged }).returning();
-      res.json(created.value);
+      await ref.set({ ...DEFAULT_PRICING, ...patch });
     }
+    const updated = await ref.get();
+    res.json(updated.data());
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

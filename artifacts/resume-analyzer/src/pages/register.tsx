@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithCustomToken } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { UserPlus, Mail, Lock, User, Chrome } from "lucide-react";
 
 export default function Register() {
-  const { userProfile, loading, setJwtSession } = useAuth();
+  const { userProfile, loading } = useAuth();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
 
@@ -42,7 +42,7 @@ export default function Register() {
         setError(data.error || "Registration failed. Please try again.");
         return;
       }
-      setJwtSession(data.token, data.user);
+      await signInWithCustomToken(auth, data.customToken);
     } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
@@ -55,24 +55,7 @@ export default function Register() {
     setSubmitting(true);
     try {
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const idToken = await result.user.getIdToken();
-
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Google sign-in failed.");
-        setSubmitting(false);
-        return;
-      }
-
-      await signOut(auth);
-      setJwtSession(data.token, data.user);
+      await signInWithPopup(auth, provider);
     } catch (err: any) {
       setError(err.message || "Google sign-in failed.");
       setSubmitting(false);

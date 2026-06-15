@@ -1,19 +1,14 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { appSettingsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { getAdminFirestore } from "../lib/firebase-admin.js";
 import { requireAdmin } from "../lib/auth-middleware.js";
 
 const router = Router();
 
 router.get("/settings", async (_req, res) => {
   try {
-    const settings = await db.select().from(appSettingsTable).where(eq(appSettingsTable.key, "global")).limit(1);
-    if (settings.length) {
-      res.json(settings[0].value);
-    } else {
-      res.json({ resumeNameChangeFree: false });
-    }
+    const db = getAdminFirestore();
+    const doc = await db.collection("app_settings").doc("global").get();
+    res.json(doc.exists ? doc.data() : { resumeNameChangeFree: false });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -22,16 +17,16 @@ router.get("/settings", async (_req, res) => {
 router.patch("/settings", requireAdmin, async (req, res) => {
   const patch = req.body as Record<string, unknown>;
   try {
-    const existing = await db.select().from(appSettingsTable).where(eq(appSettingsTable.key, "global")).limit(1);
-    if (existing.length) {
-      const merged = { ...(existing[0].value as Record<string, unknown>), ...patch };
-      const [updated] = await db.update(appSettingsTable).set({ value: merged }).where(eq(appSettingsTable.key, "global")).returning();
-      res.json(updated.value);
+    const db = getAdminFirestore();
+    const ref = db.collection("app_settings").doc("global");
+    const doc = await ref.get();
+    if (doc.exists) {
+      await ref.update(patch);
     } else {
-      const defaults = { resumeNameChangeFree: false, ...patch };
-      const [created] = await db.insert(appSettingsTable).values({ key: "global", value: defaults }).returning();
-      res.json(created.value);
+      await ref.set({ resumeNameChangeFree: false, ...patch });
     }
+    const updated = await ref.get();
+    res.json(updated.data());
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

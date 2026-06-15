@@ -8,17 +8,13 @@
 - `PORT=5000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run dev` — تشغيل الواجهة (port 5000)
 - `pnpm run typecheck` — فحص TypeScript لجميع الحزم
 - `pnpm run build` — بناء كامل
-- `pnpm --filter @workspace/api-spec run codegen` — إعادة توليد API hooks من OpenAPI spec
-- `pnpm --filter @workspace/db run push` — تطبيق تغييرات DB schema
 
 ## Stack
 
 - pnpm workspaces، Node.js، TypeScript 5.9
 - API: Express 5 — port 8080
 - Frontend: React 19 + Vite — port 5000 (يوجّه `/api` إلى port 8080)
-- DB: PostgreSQL + Drizzle ORM
-- Auth: Replit Auth (`@replit/repl-auth`) + express-session مخزّن في Postgres
-- Validation: Zod (`zod/v4`)، `drizzle-zod`
+- Auth + DB: Firebase Auth + Firestore (عبر Firebase Admin SDK في الـ backend)
 - AI: n8n webhooks عبر proxy محمي بالمصادقة
 - i18n: i18next (عربي + إنجليزي)
 - Build: esbuild (CJS bundle)
@@ -27,24 +23,38 @@
 
 - `artifacts/resume-analyzer/` — الواجهة (React/Vite)
 - `artifacts/api-server/` — الـ backend (Express)
-- `lib/db/` — Drizzle schema + client (source of truth للـ DB)
-- `lib/api-spec/` — OpenAPI spec
-- `lib/api-client-react/` + `lib/api-zod/` — auto-generated من codegen
 
 ## Architecture decisions
 
-- Firebase كان مستخدماً لكن استُبدل بـ Replit Auth + PostgreSQL
-- الـ n8n webhooks تُستدعى فقط من الـ backend proxy (لا مباشرة من المتصفح)
-- الـ session مخزّنة في Postgres عبر `connect-pg-simple`
-- الـ admin access يتحقق من `role === "admin"` في DB أو قائمة `ADMIN_EMAILS` في `constants.ts`
+- لا PostgreSQL ولا Drizzle — كل البيانات في Firestore
+- Firebase Auth هو مصدر الحقيقة للمصادقة
+  - Google: `signInWithPopup` → Firebase ID token مباشرة
+  - Email/password: POST `/api/auth/login-email` → server يعيد `customToken` → `signInWithCustomToken`
+- الـ backend يتحقق من الهوية عبر `verifyIdToken` (Firebase Admin SDK)
+- الـ frontend يرسل `Authorization: Bearer <idToken>` مع كل طلب
+- `firebase-admin` مُخرَّج (externalized) في `build.mjs` — لا يُبنى داخل الـ bundle
+- الـ admin access يتحقق من `role === "admin"` في Firestore أو قائمة `ADMIN_EMAILS` في `constants.ts`
 - أول مستخدم يمكنه ترقية نفسه لأدمن عبر `GET /api/admin/setup` (يعمل فقط إذا لا يوجد أدمن بعد)
+
+## Environment Variables
+
+### Backend (Replit Secrets / Vercel Env Vars)
+- `FIREBASE_SERVICE_ACCOUNT` — محتوى ملف service account JSON من Firebase Console
+
+### Frontend (VITE_* — تُشحن للمتصفح)
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
 
 ## Product
 
 - تحليل السيرة الذاتية مقابل وصف وظيفي (ATS score + keyword gaps)
 - مراجعة عامة للـ CV
 - بناء السيرة الذاتية
-- نظام اشتراكات (Free / Pro)
+- نظام اشتراكات (Free / Starter / Pro)
 - لوحة إدارة كاملة للـ admin
 
 ## Admin Dashboard
@@ -63,13 +73,15 @@ _اضف تفضيلاتك هنا_
 ## Gotchas
 
 - Vite يوجّه `/api/*` إلى `localhost:8080` (محدد في `vite.config.ts`)
-- الـ session secret في `SESSION_SECRET` — يوجد fallback للتطوير فقط
-- `pnpm approve-builds` مطلوب إذا أضفت packages ببناء scripts جديدة
+- `firebase-admin` يُحمَّل كـ external في esbuild — يجب أن يكون مثبّتاً في node_modules وقت التشغيل
 - لا تستخدم `VITE_*` للأسرار — يُشحن للمتصفح
+- الـ Firestore queries التي تجمع `where` + `orderBy` قد تحتاج composite indexes — أنشئها من Firebase Console إذا ظهر خطأ
 
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
-- DB schema: `lib/db/src/schema/index.ts`
+- Firebase Admin: `artifacts/api-server/src/lib/firebase-admin.ts`
+- Auth middleware: `artifacts/api-server/src/lib/auth-middleware.ts`
 - API routes: `artifacts/api-server/src/routes/`
 - Frontend pages: `artifacts/resume-analyzer/src/pages/`
+- Auth context: `artifacts/resume-analyzer/src/contexts/AuthContext.tsx`
