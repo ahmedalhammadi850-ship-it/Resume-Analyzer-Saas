@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
-  const { firebaseUser, userProfile, loading } = useAuth();
+  const { userProfile, loading } = useAuth();
   const [, setLocation] = useLocation();
 
   const isAdmin =
@@ -20,19 +20,17 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
 
   const hasAccess = !requireRole || (requireRole === "admin" ? isAdmin : userProfile?.role === requireRole);
 
-  const profileLoading = !!firebaseUser && !userProfile;
-
   useEffect(() => {
-    if (!loading && !profileLoading) {
-      if (!firebaseUser) {
+    if (!loading) {
+      if (!userProfile) {
         setLocation("/login");
       } else if (!hasAccess) {
         setLocation("/dashboard");
       }
     }
-  }, [loading, profileLoading, firebaseUser, hasAccess, setLocation]);
+  }, [loading, userProfile, hasAccess, setLocation]);
 
-  if (loading || profileLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center space-y-4">
@@ -43,7 +41,7 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
     );
   }
 
-  if (!firebaseUser || !hasAccess) return null;
+  if (!userProfile || !hasAccess) return null;
 
   return <>{children}</>;
 }

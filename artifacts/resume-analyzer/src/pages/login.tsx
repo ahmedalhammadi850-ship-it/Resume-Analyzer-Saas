@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import {
-  GoogleAuthProvider,
-  signInWithRedirect,
-  signInWithCustomToken,
-} from "firebase/auth";
+import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { LogIn, Mail, Lock, Chrome } from "lucide-react";
 
 export default function Login() {
-  const { firebaseUser, loading } = useAuth();
+  const { userProfile, loading, setJwtSession } = useAuth();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
 
@@ -25,10 +21,10 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && firebaseUser) {
+    if (!loading && userProfile) {
       setLocation("/dashboard");
     }
-  }, [loading, firebaseUser, setLocation]);
+  }, [loading, userProfile, setLocation]);
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +41,7 @@ export default function Login() {
         setError(data.error || "Login failed. Please try again.");
         return;
       }
-      await signInWithCustomToken(auth, data.customToken);
+      setJwtSession(data.token, data.user);
       setLocation("/dashboard");
     } catch {
       setError("Network error. Please check your connection and try again.");
@@ -79,20 +75,13 @@ export default function Login() {
           <CardDescription>Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleGoogleLogin}
-            disabled={submitting}
-          >
+          <Button variant="outline" className="w-full gap-2" onClick={handleGoogleLogin} disabled={submitting}>
             <Chrome className="h-4 w-4" />
             Continue with Google
           </Button>
 
           <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">or continue with email</span>
             </div>
@@ -103,44 +92,24 @@ export default function Login() {
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="pl-10"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  disabled={submitting}
-                />
+                <Input id="email" type="email" placeholder="you@example.com" className="pl-10"
+                  value={email} onChange={e => setEmail(e.target.value)} required disabled={submitting} />
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">Forgot password?</Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  className="pl-10"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  disabled={submitting}
-                />
+                <Input id="password" type="password" placeholder="••••••••" className="pl-10"
+                  value={password} onChange={e => setPassword(e.target.value)} required disabled={submitting} />
               </div>
             </div>
 
-            {error && (
-              <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>}
 
             <Button type="submit" className="w-full gap-2" disabled={submitting}>
               <LogIn className="h-4 w-4" />
@@ -150,9 +119,7 @@ export default function Login() {
 
           <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-semibold text-primary hover:underline">
-              Sign up
-            </Link>
+            <Link href="/register" className="font-semibold text-primary hover:underline">Sign up</Link>
           </p>
         </CardContent>
       </Card>

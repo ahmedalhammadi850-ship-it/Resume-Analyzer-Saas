@@ -6,7 +6,6 @@ import {
   type User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "@/firebase";
-import { api } from "@/lib/api";
 
 export interface UserProfile {
   id: string;
@@ -19,12 +18,15 @@ export interface UserProfile {
   createdAt: string;
 }
 
+const JWT_STORAGE_KEY = "auth_token";
+
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  setJwtSession: (token: string, profile: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -35,50 +37,108 @@ export function useAuth() {
   return ctx;
 }
 
+async function fetchProfileWithToken(token: string): Promise<UserProfile | null> {
+  try {
+    const res = await fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(JWT_STORAGE_KEY);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async () => {
-    try {
-      const profile = await api.auth.me();
-      setUserProfile(profile);
-    } catch {
-      setUserProfile(null);
+  function setJwtSession(token: string, profile: UserProfile) {
+    localStorage.setItem(JWT_STORAGE_KEY, token);
+    setUserProfile(profile);
+    setLoading(false);
+  }
+
+  const refreshProfile = useCallback(async () => {
+    // Try Firebase user first
+    if (firebaseUser) {
+      try {
+        const token = await firebaseUser.getIdToken();
+        const profile = await fetchProfileWithToken(token);
+        if (profile) setUserProfile(profile);
+      } catch {}
+      return;
     }
-  }, []);
+    // Try stored JWT
+    const stored = getStoredToken();
+    if (stored) {
+      const profile = await fetchProfileWithToken(stored);
+      if (profile) setUserProfile(profile);
+      else localStorage.removeItem(JWT_STORAGE_KEY);
+    }
+  }, [firebaseUser]);
 
   useEffect(() => {
-    // Handle redirect result from Google sign-in
-    getRedirectResult(auth).catch(() => {});
+    // Handle Google redirect result
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (result?.user) {
+          // Clear any stored JWT since we now have a Firebase session
+          localStorage.removeItem(JWT_STORAGE_KEY);
+        }
+      })
+      .catch(() => {});
 
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
-        await fetchProfile();
+        // Firebase (Google) session
+        localStorage.removeItem(JWT_STORAGE_KEY);
+        try {
+          const token = await fbUser.getIdToken();
+          const profile = await fetchProfileWithToken(token);
+          setUserProfile(profile);
+        } catch {
+          setUserProfile(null);
+        }
+        setLoading(false);
       } else {
-        setUserProfile(null);
+        // No Firebase session — check for stored JWT (email/password)
+        const stored = getStoredToken();
+        if (stored) {
+          const profile = await fetchProfileWithToken(stored);
+          if (profile) {
+            setUserProfile(profile);
+          } else {
+            localStorage.removeItem(JWT_STORAGE_KEY);
+            setUserProfile(null);
+          }
+        } else {
+          setUserProfile(null);
+        }
+        setLoading(false);
       }
-      setLoading(false);
     });
+
     return unsubscribe;
-  }, [fetchProfile]);
+  }, []);
 
   async function logout() {
-    await firebaseSignOut(auth);
-    setFirebaseUser(null);
+    localStorage.removeItem(JWT_STORAGE_KEY);
     setUserProfile(null);
-  }
-
-  async function refreshProfile() {
-    if (firebaseUser) {
-      await fetchProfile();
-    }
+    setFirebaseUser(null);
+    try {
+      await firebaseSignOut(auth);
+    } catch {}
   }
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, userProfile, loading, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ firebaseUser, userProfile, loading, logout, refreshProfile, setJwtSession }}>
       {children}
     </AuthContext.Provider>
   );

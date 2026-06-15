@@ -1,16 +1,23 @@
 import { auth } from "@/firebase";
+import { getStoredToken } from "@/contexts/AuthContext";
 
 const BASE = "/api";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const user = auth.currentUser;
-  if (!user) return {};
-  try {
-    const token = await user.getIdToken();
-    return { Authorization: `Bearer ${token}` };
-  } catch {
-    return {};
+  // Try Firebase user (Google sign-in)
+  const fbUser = auth.currentUser;
+  if (fbUser) {
+    try {
+      const token = await fbUser.getIdToken();
+      return { Authorization: `Bearer ${token}` };
+    } catch {}
   }
+  // Fall back to stored JWT (email/password sign-in)
+  const stored = getStoredToken();
+  if (stored) {
+    return { Authorization: `Bearer ${stored}` };
+  }
+  return {};
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {

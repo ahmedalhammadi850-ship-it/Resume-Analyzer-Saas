@@ -1,14 +1,20 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
-import { getAdminAuth } from "../lib/firebase-admin.js";
 import { FREE_PLAN_LIMIT } from "../lib/constants.js";
 
 const router = Router();
 
 const SALT_ROUNDS = 10;
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev-fallback-secret-change-in-prod";
+const JWT_EXPIRES_IN = "30d";
+
+function issueToken(uid: string, email: string, name: string): string {
+  return jwt.sign({ uid, email, name }, SESSION_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
 
 router.post("/auth/register-email", async (req, res) => {
   const { email, password, name } = req.body as {
@@ -30,7 +36,7 @@ router.post("/auth/register-email", async (req, res) => {
     const existing = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email))
+      .where(eq(usersTable.email, email.toLowerCase()))
       .limit(1);
 
     if (existing.length > 0) {
@@ -38,45 +44,25 @@ router.post("/auth/register-email", async (req, res) => {
       return;
     }
 
-    const adminAuth = getAdminAuth();
-    let firebaseUid: string;
-
-    try {
-      const fbUser = await adminAuth.createUser({
-        email,
-        displayName: name?.trim() || email.split("@")[0],
-      });
-      firebaseUid = fbUser.uid;
-    } catch (fbErr: any) {
-      if (fbErr.code === "auth/email-already-exists") {
-        const fbUser = await adminAuth.getUserByEmail(email);
-        firebaseUid = fbUser.uid;
-      } else {
-        throw fbErr;
-      }
-    }
-
+    const uid = crypto.randomUUID();
+    const displayName = name?.trim() || email.split("@")[0] || "User";
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     const [user] = await db
       .insert(usersTable)
       .values({
-        id: firebaseUid,
-        name: name?.trim() || email.split("@")[0] || "User",
-        email,
+        id: uid,
+        name: displayName,
+        email: email.toLowerCase(),
         passwordHash,
         plan: "free",
         remainingScans: FREE_PLAN_LIMIT,
         role: "user",
       })
-      .onConflictDoUpdate({
-        target: usersTable.id,
-        set: { passwordHash },
-      })
       .returning();
 
-    const customToken = await adminAuth.createCustomToken(firebaseUid);
-    res.json({ customToken, user });
+    const token = issueToken(uid, user.email, user.name);
+    res.json({ token, user });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Registration failed." });
   }
@@ -97,7 +83,7 @@ router.post("/auth/login-email", async (req, res) => {
     const users = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.email, email))
+      .where(eq(usersTable.email, email.toLowerCase()))
       .limit(1);
 
     if (users.length === 0) {
@@ -123,9 +109,8 @@ router.post("/auth/login-email", async (req, res) => {
       return;
     }
 
-    const adminAuth = getAdminAuth();
-    const customToken = await adminAuth.createCustomToken(user.id);
-    res.json({ customToken, user });
+    const token = issueToken(user.id, user.email, user.name);
+    res.json({ token, user });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Login failed." });
   }
