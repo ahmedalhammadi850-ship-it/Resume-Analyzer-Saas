@@ -25,10 +25,12 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@firebase/util",
       "@swc/core",
       "bcrypt",
       "esbuild",
       "msw",
+      "protobufjs",
       "unrs-resolver"
     ],
     "overrides": {
