@@ -1,10 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import {
-  onAuthStateChanged,
-  signOut as firebaseSignOut,
-  getRedirectResult,
-  type User as FirebaseUser,
-} from "firebase/auth";
+import { signOut as firebaseSignOut } from "firebase/auth";
 import { auth } from "@/firebase";
 
 export interface UserProfile {
@@ -21,7 +16,6 @@ export interface UserProfile {
 const JWT_STORAGE_KEY = "auth_token";
 
 interface AuthContextType {
-  firebaseUser: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
   logout: () => Promise<void>;
@@ -37,6 +31,10 @@ export function useAuth() {
   return ctx;
 }
 
+export function getStoredToken(): string | null {
+  return localStorage.getItem(JWT_STORAGE_KEY);
+}
+
 async function fetchProfileWithToken(token: string): Promise<UserProfile | null> {
   try {
     const res = await fetch("/api/auth/me", {
@@ -49,12 +47,7 @@ async function fetchProfileWithToken(token: string): Promise<UserProfile | null>
   }
 }
 
-export function getStoredToken(): string | null {
-  return localStorage.getItem(JWT_STORAGE_KEY);
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -65,80 +58,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const refreshProfile = useCallback(async () => {
-    // Try Firebase user first
-    if (firebaseUser) {
-      try {
-        const token = await firebaseUser.getIdToken();
-        const profile = await fetchProfileWithToken(token);
-        if (profile) setUserProfile(profile);
-      } catch {}
-      return;
-    }
-    // Try stored JWT
     const stored = getStoredToken();
     if (stored) {
       const profile = await fetchProfileWithToken(stored);
       if (profile) setUserProfile(profile);
-      else localStorage.removeItem(JWT_STORAGE_KEY);
     }
-  }, [firebaseUser]);
+  }, []);
 
   useEffect(() => {
-    // Handle Google redirect result
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result?.user) {
-          // Clear any stored JWT since we now have a Firebase session
-          localStorage.removeItem(JWT_STORAGE_KEY);
-        }
-      })
-      .catch(() => {});
-
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setFirebaseUser(fbUser);
-      if (fbUser) {
-        // Firebase (Google) session
-        localStorage.removeItem(JWT_STORAGE_KEY);
-        try {
-          const token = await fbUser.getIdToken();
-          const profile = await fetchProfileWithToken(token);
+    const stored = getStoredToken();
+    if (stored) {
+      fetchProfileWithToken(stored).then((profile) => {
+        if (profile) {
           setUserProfile(profile);
-        } catch {
-          setUserProfile(null);
-        }
-        setLoading(false);
-      } else {
-        // No Firebase session — check for stored JWT (email/password)
-        const stored = getStoredToken();
-        if (stored) {
-          const profile = await fetchProfileWithToken(stored);
-          if (profile) {
-            setUserProfile(profile);
-          } else {
-            localStorage.removeItem(JWT_STORAGE_KEY);
-            setUserProfile(null);
-          }
         } else {
+          localStorage.removeItem(JWT_STORAGE_KEY);
           setUserProfile(null);
         }
         setLoading(false);
-      }
-    });
-
-    return unsubscribe;
+      });
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   async function logout() {
     localStorage.removeItem(JWT_STORAGE_KEY);
     setUserProfile(null);
-    setFirebaseUser(null);
     try {
       await firebaseSignOut(auth);
     } catch {}
   }
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, userProfile, loading, logout, refreshProfile, setJwtSession }}>
+    <AuthContext.Provider value={{ userProfile, loading, logout, refreshProfile, setJwtSession }}>
       {children}
     </AuthContext.Provider>
   );

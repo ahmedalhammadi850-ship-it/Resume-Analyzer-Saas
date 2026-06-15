@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,6 @@ export default function Register() {
         return;
       }
       setJwtSession(data.token, data.user);
-      // redirect handled by the useEffect below after state commits
     } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
@@ -56,7 +55,24 @@ export default function Register() {
     setSubmitting(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Google sign-in failed.");
+        setSubmitting(false);
+        return;
+      }
+
+      await signOut(auth);
+      setJwtSession(data.token, data.user);
     } catch (err: any) {
       setError(err.message || "Google sign-in failed.");
       setSubmitting(false);
