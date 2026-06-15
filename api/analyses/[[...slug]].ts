@@ -35,10 +35,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   if (!id && req.method === "GET") {
     const limitParam = req.query.limit ? parseInt(req.query.limit as string) : undefined;
     try {
-      let q = db.collection("analyses").where("userId", "==", user.uid).orderBy("createdAt", "desc");
-      if (limitParam) q = q.limit(limitParam) as typeof q;
-      const snap = await q.get();
-      res.status(200).json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const snap = await db.collection("analyses")
+        .where("userId", "==", user.uid)
+        .get();
+      let results = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      results.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+      if (limitParam) results = results.slice(0, limitParam);
+      res.status(200).json(results);
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }

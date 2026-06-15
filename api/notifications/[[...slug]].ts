@@ -23,10 +23,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     try {
       const snap = await db.collection("notifications")
         .where("userId", "==", user.uid)
-        .orderBy("createdAt", "desc")
-        .limit(50)
         .get();
-      res.status(200).json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const results = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      results.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+      res.status(200).json(results.slice(0, 50));
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }
@@ -37,11 +41,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     try {
       const snap = await db.collection("notifications")
         .where("userId", "==", user.uid)
-        .where("read", "==", false)
         .get();
-      res.status(200).json({ count: snap.size });
-    } catch (err: unknown) {
-      res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+      const count = snap.docs.filter(d => d.data().read === false).length;
+      res.status(200).json({ count });
+    } catch {
+      res.status(200).json({ count: 0 });
     }
     return;
   }
@@ -50,10 +54,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     try {
       const snap = await db.collection("notifications")
         .where("userId", "==", user.uid)
-        .where("read", "==", false)
         .get();
       const batch = db.batch();
-      snap.docs.forEach(d => batch.update(d.ref, { read: true }));
+      snap.docs
+        .filter(d => d.data().read === false)
+        .forEach(d => batch.update(d.ref, { read: true }));
       await batch.commit();
       res.status(200).json({ ok: true });
     } catch (err: unknown) {
