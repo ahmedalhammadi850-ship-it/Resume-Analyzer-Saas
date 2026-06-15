@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { firebaseSignIn, issueJwt } from "../_auth.js";
+import { verifyFirebaseToken, issueJwt } from "../_auth.js";
 import { firestoreGetUser, firestoreSetUser, type UserProfile } from "../_firestore.js";
 
 const FREE_PLAN_LIMIT = 1;
@@ -15,26 +15,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   if (req.method === "OPTIONS") { res.status(204).end(); return; }
   if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
-  const { email, password } = (req.body ?? {}) as { email?: string; password?: string };
-
-  if (!email || !password) { res.status(400).json({ error: "Email and password are required." }); return; }
+  const { idToken } = (req.body ?? {}) as { idToken?: string };
+  if (!idToken) { res.status(400).json({ error: "idToken is required." }); return; }
 
   try {
-    // 1. تسجيل الدخول عبر Firebase Auth REST API
-    const fbResult = await firebaseSignIn(email.toLowerCase(), password);
+    // 1. التحقق من Firebase ID token
+    const fbUser = await verifyFirebaseToken(idToken);
+    if (!fbUser) { res.status(401).json({ error: "Invalid Firebase token." }); return; }
 
-    if (!fbResult) {
-      res.status(503).json({ error: "Firebase is not configured. Please set VITE_FIREBASE_API_KEY." });
-      return;
-    }
+    const { uid, email, displayName } = fbUser;
 
-    const { uid, idToken, displayName } = fbResult;
-
-    // 2. جلب ملف المستخدم من Firestore
-    let userProfile = await firestoreGetUser(uid, idToken);
+    // 2. جلب أو إنشاء ملف المستخدم في Firestore
+    let userProfile: UserProfile | null = await firestoreGetUser(uid, idToken);
 
     if (!userProfile) {
-      // مستخدم Firebase موجود لكن ليس في Firestore — أنشئ ملفه
       const now = new Date().toISOString();
       userProfile = {
         id: uid,
@@ -60,19 +54,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const token = issueJwt(userProfile);
     res.status(200).json({ token, user: userProfile });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Login failed.";
-    if (msg.includes("EMAIL_NOT_FOUND") || msg.includes("INVALID_PASSWORD") || msg.includes("INVALID_LOGIN_CREDENTIALS")) {
-      res.status(401).json({ error: "Invalid email or password." });
-      return;
-    }
-    if (msg.includes("USER_DISABLED")) {
-      res.status(403).json({ error: "This account has been disabled." });
-      return;
-    }
-    if (msg.includes("TOO_MANY_ATTEMPTS")) {
-      res.status(429).json({ error: "Too many failed attempts. Please try again later." });
-      return;
-    }
-    res.status(500).json({ error: msg });
+    res.status(500).json({ error: err instanceof Error ? err.message : "Google sign-in failed." });
   }
 }
