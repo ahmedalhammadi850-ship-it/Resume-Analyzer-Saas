@@ -45,7 +45,7 @@ async function verifyFirebaseToken(idToken: string): Promise<AuthUser> {
     iat: number;
   };
 
-  const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
   const now = Math.floor(Date.now() / 1000);
 
   if (payload.exp < now) throw new Error("Token expired");

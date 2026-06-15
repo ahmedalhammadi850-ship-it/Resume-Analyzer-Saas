@@ -33,7 +33,7 @@ export function useAuth() {
 
 async function fetchProfile(firebaseUser: FirebaseUser): Promise<UserProfile | null> {
   try {
-    const token = await firebaseUser.getIdToken(true);
+    const token = await firebaseUser.getIdToken();
     const res = await fetch("/api/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     });

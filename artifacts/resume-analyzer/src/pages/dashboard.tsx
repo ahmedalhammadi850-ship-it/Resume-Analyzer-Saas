@@ -24,8 +24,10 @@ export default function Dashboard() {
         try {
           const recent = await api.analyses.list(5);
           setAnalyses(recent);
-        } catch (error) {
-          console.error("Failed to load recent analyses", error);
+        } catch (error: any) {
+          if (error?.status !== 401 && error?.status !== 403) {
+            console.error("Failed to load recent analyses", error);
+          }
         } finally {
           setIsLoading(false);
         }
