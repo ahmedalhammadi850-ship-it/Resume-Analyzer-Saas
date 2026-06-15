@@ -1,30 +1,65 @@
 import { Router } from "express";
+import multer from "multer";
 import { requireAuth } from "../lib/auth-middleware.js";
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-router.post("/n8n-proxy", requireAuth, async (req, res) => {
-  const { webhook_url, ...body } = req.body as { webhook_url: string; [key: string]: unknown };
+router.post("/n8n-proxy", requireAuth, upload.any(), async (req, res) => {
+  const contentType = req.headers["content-type"] ?? "";
+  const isMultipart = contentType.includes("multipart/form-data");
 
-  if (!webhook_url || !webhook_url.startsWith("https://")) {
-    res.status(400).json({ error: "webhook_url مطلوب" });
-    return;
+  let webhookUrl: string;
+  let forwardBody: BodyInit;
+  const forwardHeaders: Record<string, string> = {};
+
+  if (isMultipart) {
+    webhookUrl = (req.body as Record<string, string>).webhook_url ?? "";
+    if (!webhookUrl || !webhookUrl.startsWith("https://")) {
+      res.status(400).json({ error: "webhook_url مطلوب" });
+      return;
+    }
+
+    const form = new FormData();
+
+    for (const [key, value] of Object.entries(req.body as Record<string, string>)) {
+      if (key !== "webhook_url") {
+        form.append(key, value);
+      }
+    }
+
+    const files = (req.files as Express.Multer.File[]) ?? [];
+    for (const file of files) {
+      const blob = new Blob([file.buffer], { type: file.mimetype });
+      form.append(file.fieldname, blob, file.originalname);
+    }
+
+    forwardBody = form;
+  } else {
+    const { webhook_url, ...body } = req.body as { webhook_url: string; [key: string]: unknown };
+    webhookUrl = webhook_url ?? "";
+    if (!webhookUrl || !webhookUrl.startsWith("https://")) {
+      res.status(400).json({ error: "webhook_url مطلوب" });
+      return;
+    }
+    forwardHeaders["Content-Type"] = "application/json";
+    forwardBody = JSON.stringify(body);
   }
 
   try {
-    const n8nRes: any = await fetch(webhook_url, {
+    const n8nRes = await fetch(webhookUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      headers: forwardHeaders,
+      body: forwardBody,
     });
 
-    const contentType: string = n8nRes.headers.get("content-type") ?? "";
+    const respContentType: string = n8nRes.headers.get("content-type") ?? "";
 
     const isBinary =
-      contentType.includes("application/pdf") ||
-      contentType.includes("application/vnd") ||
-      contentType.includes("application/octet-stream") ||
-      contentType.includes("application/zip");
+      respContentType.includes("application/pdf") ||
+      respContentType.includes("application/vnd") ||
+      respContentType.includes("application/octet-stream") ||
+      respContentType.includes("application/zip");
 
     if (isBinary) {
       const buffer = await n8nRes.arrayBuffer();
@@ -32,7 +67,7 @@ router.post("/n8n-proxy", requireAuth, async (req, res) => {
       const disposition: string = n8nRes.headers.get("content-disposition") ?? "";
       const nameMatch = disposition.match(/filename[^;=\n]*=([^;\n]*)/);
       const fileName = nameMatch ? nameMatch[1].replace(/['"]/g, "").trim() : "resume.pdf";
-      res.status(200).json({ type: "file", base64, mimeType: contentType.split(";")[0].trim(), fileName });
+      res.status(200).json({ type: "file", base64, mimeType: respContentType.split(";")[0].trim(), fileName });
       return;
     }
 

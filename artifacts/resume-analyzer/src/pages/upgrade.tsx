@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { N8N_WEBHOOK_UPGRADE } from "@/types";
 
+
 const BANK_INFO = {
   bank: "بنك التضامن — Tadhamon Bank",
   beneficiary: "أحمد عبدالله عقلان الحمادي",
@@ -87,8 +88,8 @@ export default function Upgrade() {
       form.append("user_id", userProfile.id);
       form.append("user_email", userProfile.email ?? "");
       form.append("user_name", userProfile.name ?? "");
-      const res = await fetch(N8N_WEBHOOK_UPGRADE, { method: "POST", body: form });
-      if (res.ok) n8nSent = true;
+      await api.n8nProxyForm(N8N_WEBHOOK_UPGRADE, form);
+      n8nSent = true;
     } catch {
       // n8n unreachable — still save request
     }

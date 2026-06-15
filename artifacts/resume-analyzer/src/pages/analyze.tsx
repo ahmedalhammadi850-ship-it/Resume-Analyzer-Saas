@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslation } from "react-i18next";
 import { N8N_WEBHOOK_JD, N8N_WEBHOOK_GENERAL } from "@/types";
 
+
 const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
 
 function extractScore(results: Record<string, unknown>): number {
@@ -88,19 +89,16 @@ export default function Analyze() {
     try {
       const form = new FormData();
       form.append("resume_file", file);
-      let n8nRes: Response;
 
+      let rawData: unknown;
       if (activeTab === "jd_match") {
         form.append("job_title", jobTitle);
         form.append("job_description", jobDescription);
-        n8nRes = await fetch(N8N_WEBHOOK_JD, { method: "POST", body: form });
+        rawData = await api.n8nProxyForm(N8N_WEBHOOK_JD, form);
       } else {
-        n8nRes = await fetch(N8N_WEBHOOK_GENERAL, { method: "POST", body: form });
+        rawData = await api.n8nProxyForm(N8N_WEBHOOK_GENERAL, form);
       }
 
-      if (!n8nRes.ok) throw new Error(`N8N رجع بخطأ (${n8nRes.status})`);
-
-      const rawData = await n8nRes.json();
       const results = Array.isArray(rawData) ? rawData[0] : rawData;
       if (!results || typeof results !== "object") throw new Error("لم يتم استلام بيانات من N8N");
       const score = extractScore(results as Record<string, unknown>);

@@ -37,6 +37,20 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+async function requestForm<T>(path: string, formData: FormData): Promise<T> {
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { ...authHeaders },
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw Object.assign(new Error(err.error || res.statusText), { status: res.status });
+  }
+  return res.json();
+}
+
 export const api = {
   auth: {
     me: () => request<any>("/auth/me"),
@@ -97,4 +111,8 @@ export const api = {
   },
   n8nProxy: (webhookUrl: string, body: Record<string, unknown>) =>
     request<any>("/n8n-proxy", { method: "POST", body: JSON.stringify({ webhook_url: webhookUrl, ...body }) }),
+  n8nProxyForm: (webhookUrl: string, formData: FormData) => {
+    formData.append("webhook_url", webhookUrl);
+    return requestForm<any>("/n8n-proxy", formData);
+  },
 };
