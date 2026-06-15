@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import {
   createUserWithEmailAndPassword,
@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { UserPlus, Mail, Lock, User, MailCheck, RefreshCw } from "lucide-react";
 
 export default function Register() {
-  const { userProfile, loading } = useAuth();
+  const { userProfile, loading, recheckVerification } = useAuth();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
 
@@ -32,12 +32,27 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [resending, setResending] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!loading && userProfile) {
       setLocation("/dashboard");
     }
   }, [loading, userProfile, setLocation]);
+
+  useEffect(() => {
+    if (!verificationSent) return;
+    pollingRef.current = setInterval(async () => {
+      const verified = await recheckVerification();
+      if (verified) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        setLocation("/dashboard");
+      }
+    }, 3000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [verificationSent, recheckVerification, setLocation]);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();

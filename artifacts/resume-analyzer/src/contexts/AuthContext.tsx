@@ -20,6 +20,7 @@ interface AuthContextType {
   needsVerification: boolean;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  recheckVerification: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -32,7 +33,7 @@ export function useAuth() {
 
 async function fetchProfile(firebaseUser: FirebaseUser): Promise<UserProfile | null> {
   try {
-    const token = await firebaseUser.getIdToken();
+    const token = await firebaseUser.getIdToken(true);
     const res = await fetch("/api/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -55,6 +56,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const profile = await fetchProfile(firebaseUser);
     if (profile) setUserProfile(profile);
   }, [firebaseUser]);
+
+  const recheckVerification = useCallback(async (): Promise<boolean> => {
+    const user = auth.currentUser;
+    if (!user) return false;
+    try {
+      await user.reload();
+      const refreshed = auth.currentUser;
+      if (refreshed?.emailVerified) {
+        setFirebaseUser(refreshed);
+        setNeedsVerification(false);
+        const profile = await fetchProfile(refreshed);
+        setUserProfile(profile);
+        return true;
+      }
+    } catch {}
+    return false;
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -85,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ userProfile, firebaseUser, loading, needsVerification, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ userProfile, firebaseUser, loading, needsVerification, logout, refreshProfile, recheckVerification }}>
       {children}
     </AuthContext.Provider>
   );
