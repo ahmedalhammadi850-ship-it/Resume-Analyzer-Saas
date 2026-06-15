@@ -17,10 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   const slug = (req.query.slug ?? []) as string[];
   const id = slug[0];
-  const db = getAdminFirestore();
 
   if (id && req.method === "GET") {
     try {
+      const db = getAdminFirestore();
       const doc = await db.collection("analyses").doc(id).get();
       if (!doc.exists) { res.status(404).json({ error: "Analysis not found" }); return; }
       const data = doc.data()!;
@@ -35,19 +35,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   if (!id && req.method === "GET") {
     const limitParam = req.query.limit ? parseInt(req.query.limit as string) : undefined;
     try {
+      const db = getAdminFirestore();
       const snap = await db.collection("analyses")
         .where("userId", "==", user.uid)
         .get();
-      let results = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
-      results.sort((a, b) => {
+      let results = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+      results.sort((a: any, b: any) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return bTime - aTime;
       });
       if (limitParam) results = results.slice(0, limitParam);
       res.status(200).json(results);
-    } catch (err: unknown) {
-      res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+    } catch {
+      res.status(200).json([]);
     }
     return;
   }
@@ -61,6 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
     try {
+      const db = getAdminFirestore();
       const userDoc = await db.collection("users").doc(user.uid).get();
       if (!userDoc.exists) { res.status(404).json({ error: "User not found" }); return; }
       const userData = userDoc.data()!;

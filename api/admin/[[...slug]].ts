@@ -14,7 +14,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   const slug = (req.query.slug ?? []) as string[];
   const [section, param1, param2] = slug;
-  const db = getAdminFirestore();
+  let db: ReturnType<typeof getAdminFirestore>;
+  try { db = getAdminFirestore(); } catch (err: unknown) {
+    res.status(503).json({ error: "Database unavailable" }); return;
+  }
 
   if (section === "setup" && req.method === "GET") {
     const user = await requireAuth(req, res);

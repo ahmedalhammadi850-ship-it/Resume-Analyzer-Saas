@@ -17,7 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   const slug = (req.query.slug ?? []) as string[];
   const action = slug[0];
-  const db = getAdminFirestore();
+  let db: ReturnType<typeof getAdminFirestore>;
+  try { db = getAdminFirestore(); } catch (err: unknown) {
+    res.status(503).json({ error: "Database unavailable" }); return;
+  }
 
   if (action === "me") {
     if (req.method === "GET") {
