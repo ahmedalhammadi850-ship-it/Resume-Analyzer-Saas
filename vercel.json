@@ -3,9 +3,6 @@
   "installCommand": "pnpm install",
   "buildCommand": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run build",
   "outputDirectory": "artifacts/resume-analyzer/dist",
-  "functions": {
-    "api/**/*.ts": {}
-  },
   "rewrites": [
     { "source": "/api/healthz", "destination": "/api/health" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
