@@ -42,7 +42,7 @@ export default function Login() {
         return;
       }
       setJwtSession(data.token, data.user);
-      setLocation("/dashboard");
+      // redirect handled by the useEffect below after state commits
     } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
