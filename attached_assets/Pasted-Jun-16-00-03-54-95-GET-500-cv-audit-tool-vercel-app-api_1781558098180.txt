@@ -1,0 +1,54 @@
+Jun 16 00:03:54.95
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:03:54.29
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:03:53.66
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:03:52.79
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:03:52.10
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:03:51.40
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:03:50.66
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:03:11.21
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
+Jun 16 00:01:48.60
+GET
+500
+cv-audit-tool.vercel.app
+/api/auth/me
+Error [ERR_REQUIRE_ESM]: require() of ES Module /var/task/node_modules/.pnpm/jose@6.2.3/node_modules/jose/dist/webapi/index.js from /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js not supported. Instead change the require of index.js in /var/task/node_modules/.pnpm/jwks-rsa@4.0.1/node_modules/jwks-rsa/src/utils.js to a dynamic import() which is available in all CommonJS modules. at /opt/rust/nodejs.js:2:13533 at Function.Un (/opt/rust/nodejs.js:2:13911) at e.<computed>.rt._load (/opt/rust/nodejs.js:2:13503) at TracingChannel.traceSync (node:diagnostics_channel:328:14) { code: 'ERR_REQUIRE_ESM' } Node.js process exited with exit status: 1. The logs above can help with debugging the issue.
