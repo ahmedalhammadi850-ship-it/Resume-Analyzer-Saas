@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { GoogleAuthProvider, signInWithPopup, signInWithCustomToken } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -32,19 +32,24 @@ export default function Register() {
     setError("");
     setSubmitting(true);
     try {
-      const res = await fetch("/api/auth/register-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Registration failed. Please try again.");
-        return;
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      if (name.trim()) {
+        await updateProfile(credential.user, { displayName: name.trim() });
       }
-      await signInWithCustomToken(auth, data.customToken);
-    } catch {
-      setError("Network error. Please check your connection and try again.");
+    } catch (err: any) {
+      switch (err.code) {
+        case "auth/email-already-in-use":
+          setError("An account with this email already exists.");
+          break;
+        case "auth/weak-password":
+          setError("Password must be at least 6 characters.");
+          break;
+        case "auth/invalid-email":
+          setError("Please enter a valid email address.");
+          break;
+        default:
+          setError(err.message || "Registration failed. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }

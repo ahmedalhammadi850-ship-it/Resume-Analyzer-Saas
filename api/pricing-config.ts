@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { query } from "./_db.js";
-import { requireAdmin } from "./_auth.js";
+import { requireAdmin } from "./_auth";
+import { getAdminFirestore } from "./_firebase-admin";
 
 const DEFAULT_PRICING = {
   free: {
@@ -23,10 +23,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
   if (req.method === "OPTIONS") { res.status(204).end(); return; }
 
+  const db = getAdminFirestore();
+
   if (req.method === "GET") {
     try {
-      const rows = await query("SELECT value FROM app_settings WHERE key = 'pricing' LIMIT 1", []);
-      res.status(200).json(rows.length ? rows[0].value : DEFAULT_PRICING);
+      const doc = await db.collection("app_settings").doc("pricing").get();
+      res.status(200).json(doc.exists ? doc.data() : DEFAULT_PRICING);
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }
@@ -38,22 +40,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     if (!user) return;
     const patch = (req.body ?? {}) as Record<string, unknown>;
     try {
-      const existing = await query("SELECT value FROM app_settings WHERE key = 'pricing' LIMIT 1", []);
-      if (existing.length) {
-        const merged = { ...(existing[0].value as Record<string, unknown>), ...patch };
-        const rows = await query(
-          "UPDATE app_settings SET value = $1 WHERE key = 'pricing' RETURNING value",
-          [JSON.stringify(merged)],
-        );
-        res.status(200).json(rows[0].value);
+      const ref = db.collection("app_settings").doc("pricing");
+      const doc = await ref.get();
+      if (doc.exists) {
+        await ref.update(patch);
       } else {
-        const merged = { ...DEFAULT_PRICING, ...patch };
-        const rows = await query(
-          "INSERT INTO app_settings (key, value) VALUES ('pricing', $1) RETURNING value",
-          [JSON.stringify(merged)],
-        );
-        res.status(200).json(rows[0].value);
+        await ref.set({ ...DEFAULT_PRICING, ...patch });
       }
+      const updated = await ref.get();
+      res.status(200).json(updated.data());
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }

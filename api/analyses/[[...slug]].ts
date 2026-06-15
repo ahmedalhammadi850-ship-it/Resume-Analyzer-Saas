@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { query, mapAnalysis } from "../_db.js";
-import { requireAuth } from "../_auth.js";
+import { requireAuth } from "../_auth";
+import { getAdminFirestore } from "../_firebase-admin";
 
 function cors(res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -12,43 +12,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   cors(res);
   if (req.method === "OPTIONS") { res.status(204).end(); return; }
 
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   const slug = (req.query.slug ?? []) as string[];
   const id = slug[0];
+  const db = getAdminFirestore();
 
-  // GET /api/analyses/:id
   if (id && req.method === "GET") {
     try {
-      const rows = await query("SELECT * FROM analyses WHERE id = $1 LIMIT 1", [id]);
-      if (!rows.length) { res.status(404).json({ error: "Analysis not found" }); return; }
-      const row = rows[0] as Record<string, unknown>;
-      if (row.user_id !== user.uid) { res.status(403).json({ error: "Forbidden" }); return; }
-      res.status(200).json(mapAnalysis(row));
+      const doc = await db.collection("analyses").doc(id).get();
+      if (!doc.exists) { res.status(404).json({ error: "Analysis not found" }); return; }
+      const data = doc.data()!;
+      if (data.userId !== user.uid) { res.status(403).json({ error: "Forbidden" }); return; }
+      res.status(200).json({ id: doc.id, ...data });
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }
     return;
   }
 
-  // GET /api/analyses — list
   if (!id && req.method === "GET") {
     const limitParam = req.query.limit ? parseInt(req.query.limit as string) : undefined;
     try {
-      const sql = limitParam
-        ? "SELECT * FROM analyses WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2"
-        : "SELECT * FROM analyses WHERE user_id = $1 ORDER BY created_at DESC";
-      const params = limitParam ? [user.uid, limitParam] : [user.uid];
-      const rows = await query(sql, params);
-      res.status(200).json(rows.map(r => mapAnalysis(r as Record<string, unknown>)));
+      let q = db.collection("analyses").where("userId", "==", user.uid).orderBy("createdAt", "desc");
+      if (limitParam) q = q.limit(limitParam) as typeof q;
+      const snap = await q.get();
+      res.status(200).json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }
     return;
   }
 
-  // POST /api/analyses — create
   if (!id && req.method === "POST") {
     const { analysisType, fileName, results, score } = (req.body ?? {}) as {
       analysisType?: string; fileName?: string; results?: unknown; score?: number;
@@ -58,17 +54,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
     try {
-      const rowId = crypto.randomUUID();
-      const rows = await query(
-        `INSERT INTO analyses (id, user_id, analysis_type, file_name, results, score)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [rowId, user.uid, analysisType, fileName, JSON.stringify(results), score ?? 0],
-      );
-      await query(
-        "UPDATE users SET remaining_scans = GREATEST(remaining_scans - 1, 0) WHERE id = $1 AND plan != 'pro'",
-        [user.uid],
-      );
-      res.status(200).json(mapAnalysis(rows[0] as Record<string, unknown>));
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      if (!userDoc.exists) { res.status(404).json({ error: "User not found" }); return; }
+      const userData = userDoc.data()!;
+      const ref = db.collection("analyses").doc();
+      const newAnalysis = {
+        userId: user.uid,
+        analysisType,
+        fileName,
+        results,
+        score: Number(score) || 0,
+        createdAt: new Date().toISOString(),
+      };
+      await ref.set(newAnalysis);
+      if (userData.plan === "free") {
+        await db.collection("users").doc(user.uid).update({
+          remainingScans: Math.max(0, (userData.remainingScans ?? 0) - 1),
+        });
+      }
+      res.status(200).json({ id: ref.id, ...newAnalysis });
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }

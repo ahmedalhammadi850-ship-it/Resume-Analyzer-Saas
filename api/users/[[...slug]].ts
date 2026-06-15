@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { query, mapUser } from "../_db.js";
-import { requireAuth } from "../_auth.js";
+import { requireAuth } from "../_auth";
+import { getAdminFirestore } from "../_firebase-admin";
 
 function cors(res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -12,19 +12,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   cors(res);
   if (req.method === "OPTIONS") { res.status(204).end(); return; }
 
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   const slug = (req.query.slug ?? []) as string[];
   const action = slug[0];
+  const db = getAdminFirestore();
 
-  // GET,PATCH /api/users/me
   if (action === "me") {
     if (req.method === "GET") {
       try {
-        const rows = await query("SELECT * FROM users WHERE id = $1 LIMIT 1", [user.uid]);
-        if (!rows.length) { res.status(404).json({ error: "User not found" }); return; }
-        res.status(200).json(mapUser(rows[0] as Record<string, unknown>));
+        const doc = await db.collection("users").doc(user.uid).get();
+        if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
+        res.status(200).json({ id: doc.id, ...doc.data() });
       } catch (err: unknown) {
         res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
       }
@@ -33,11 +33,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     if (req.method === "PATCH") {
       const { resumeName } = (req.body ?? {}) as { resumeName?: string };
       try {
-        const rows = await query(
-          "UPDATE users SET resume_name = $1 WHERE id = $2 RETURNING *",
-          [resumeName, user.uid],
-        );
-        res.status(200).json(mapUser(rows[0] as Record<string, unknown>));
+        await db.collection("users").doc(user.uid).update({ resumeName });
+        const doc = await db.collection("users").doc(user.uid).get();
+        res.status(200).json({ id: doc.id, ...doc.data() });
       } catch (err: unknown) {
         res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
       }
@@ -47,26 +45,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  // POST /api/users/upgrade-request
   if (action === "upgrade-request" && req.method === "POST") {
     const { n8nSent } = (req.body ?? {}) as { n8nSent?: boolean };
     try {
-      const rows = await query("SELECT * FROM users WHERE id = $1 LIMIT 1", [user.uid]);
-      if (!rows.length) { res.status(404).json({ error: "User not found" }); return; }
-      const u = rows[0] as Record<string, unknown>;
-      const upgradeRequest = {
-        userId: user.uid,
-        email: u.email,
-        name: u.name,
-        status: "pending",
-        n8nSent: n8nSent ?? false,
-        createdAt: new Date().toISOString(),
-      };
-      const updated = await query(
-        "UPDATE users SET upgrade_request = $1 WHERE id = $2 RETURNING *",
-        [JSON.stringify(upgradeRequest), user.uid],
-      );
-      res.status(200).json(mapUser(updated[0] as Record<string, unknown>));
+      const doc = await db.collection("users").doc(user.uid).get();
+      if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
+      const u = doc.data()!;
+      await db.collection("users").doc(user.uid).update({
+        upgradeRequest: {
+          userId: user.uid,
+          email: u.email,
+          name: u.name,
+          status: "pending",
+          n8nSent: n8nSent ?? false,
+          createdAt: new Date().toISOString(),
+        },
+      });
+      const updated = await db.collection("users").doc(user.uid).get();
+      res.status(200).json({ id: updated.id, ...updated.data() });
     } catch (err: unknown) {
       res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
     }

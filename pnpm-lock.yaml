@@ -157,28 +157,13 @@ importers:
 
   .:
     dependencies:
-      bcrypt:
-        specifier: ^6.0.0
-        version: 6.0.0
-      jsonwebtoken:
-        specifier: ^9.0.3
-        version: 9.0.3
-      pg:
-        specifier: ^8.20.0
-        version: 8.20.0
+      firebase-admin:
+        specifier: ^14.0.0
+        version: 14.0.0
     devDependencies:
-      '@types/bcrypt':
-        specifier: ^6.0.0
-        version: 6.0.0
-      '@types/jsonwebtoken':
-        specifier: ^9.0.10
-        version: 9.0.10
       '@types/node':
         specifier: ^25.3.3
         version: 25.6.2
-      '@types/pg':
-        specifier: ^8.11.0
-        version: 8.20.0
       '@vercel/node':
         specifier: ^3.0.0
         version: 3.2.29

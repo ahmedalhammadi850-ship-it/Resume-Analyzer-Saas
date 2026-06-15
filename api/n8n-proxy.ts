@@ -1,27 +1,18 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import { parseJsonBody, setCors, json } from "./_utils.js";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-export default async function handler(
-  req: IncomingMessage,
-  res: ServerResponse,
-): Promise<void> {
-  setCors(res);
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
 
-  if (req.method === "OPTIONS") {
-    res.writeHead(204).end();
-    return;
-  }
+  if (req.method === "OPTIONS") { res.status(204).end(); return; }
+  if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
-  if (req.method !== "POST") {
-    json(res, 405, { error: "Method Not Allowed" });
-    return;
-  }
-
-  const body = await parseJsonBody<{ webhook_url: string; [key: string]: unknown }>(req);
+  const body = (req.body ?? {}) as { webhook_url?: string; [key: string]: unknown };
   const { webhook_url, ...payload } = body;
 
   if (!webhook_url || !webhook_url.startsWith("https://")) {
-    json(res, 400, { error: "webhook_url مطلوب" });
+    res.status(400).json({ error: "webhook_url مطلوب" });
     return;
   }
 
@@ -33,7 +24,6 @@ export default async function handler(
     });
 
     const contentType = n8nRes.headers.get("content-type") ?? "";
-
     const isBinary =
       contentType.includes("application/pdf") ||
       contentType.includes("application/vnd") ||
@@ -45,39 +35,24 @@ export default async function handler(
       const base64 = Buffer.from(buffer).toString("base64");
       const disposition = n8nRes.headers.get("content-disposition") ?? "";
       const nameMatch = disposition.match(/filename[^;=\n]*=([^;\n]*)/);
-      const fileName = nameMatch
-        ? nameMatch[1].replace(/['"]/g, "").trim()
-        : "resume.pdf";
-      json(res, 200, {
-        type: "file",
-        base64,
-        mimeType: contentType.split(";")[0].trim(),
-        fileName,
-      });
+      const fileName = nameMatch ? nameMatch[1].replace(/['"]/g, "").trim() : "resume.pdf";
+      res.status(200).json({ type: "file", base64, mimeType: contentType.split(";")[0].trim(), fileName });
       return;
     }
 
     const rawText = await n8nRes.text();
-
     if (rawText.startsWith("%PDF") || rawText.includes("%%EOF")) {
       const base64 = Buffer.from(rawText, "binary").toString("base64");
-      json(res, 200, {
-        type: "file",
-        base64,
-        mimeType: "application/pdf",
-        fileName: "resume.pdf",
-      });
+      res.status(200).json({ type: "file", base64, mimeType: "application/pdf", fileName: "resume.pdf" });
       return;
     }
 
     try {
-      const parsed = JSON.parse(rawText);
-      json(res, 200, parsed);
+      res.status(200).json(JSON.parse(rawText));
     } catch {
-      json(res, 200, { message: rawText });
+      res.status(200).json({ message: rawText });
     }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    json(res, 502, { error: `تعذّر الاتصال بـ N8N: ${message}` });
+    res.status(502).json({ error: `تعذّر الاتصال بـ N8N: ${err instanceof Error ? err.message : String(err)}` });
   }
 }

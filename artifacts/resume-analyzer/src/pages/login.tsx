@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { GoogleAuthProvider, signInWithPopup, signInWithCustomToken } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -31,19 +31,23 @@ export default function Login() {
     setError("");
     setSubmitting(true);
     try {
-      const res = await fetch("/api/auth/login-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Login failed. Please try again.");
-        return;
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err: any) {
+      switch (err.code) {
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+          setError("Invalid email or password.");
+          break;
+        case "auth/too-many-requests":
+          setError("Too many failed attempts. Please try again later.");
+          break;
+        case "auth/user-disabled":
+          setError("This account has been disabled.");
+          break;
+        default:
+          setError(err.message || "Login failed. Please try again.");
       }
-      await signInWithCustomToken(auth, data.customToken);
-    } catch {
-      setError("Network error. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
