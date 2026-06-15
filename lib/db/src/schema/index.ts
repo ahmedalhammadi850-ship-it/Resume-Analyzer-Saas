@@ -31,6 +31,16 @@ export const appSettingsTable = pgTable("app_settings", {
   value: jsonb("value").notNull(),
 });
 
+export const notificationsTable = pgTable("notifications", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull().default("info"),
+  read: boolean("read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(usersTable);
 export const insertAnalysisSchema = createInsertSchema(analysesTable).omit({ id: true });
 export const insertAppSettingSchema = createInsertSchema(appSettingsTable);

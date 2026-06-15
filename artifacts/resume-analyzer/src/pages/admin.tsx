@@ -14,10 +14,13 @@ import {
   Users, FileText, DollarSign, TrendingUp, ShieldAlert, Trash2, Ban,
   PlusCircle, CheckCircle2, XCircle, Clock, RefreshCw, Settings,
   Lock, Unlock, Loader2, Crown, UserCheck, UserX, ShieldCheck, Shield,
-  BarChart3, AlertTriangle, Tag, Plus, Minus, Eye, EyeOff, Star, Save, LogOut
+  BarChart3, AlertTriangle, Tag, Plus, Minus, Eye, EyeOff, Star, Save, LogOut,
+  Bell, Send, Sparkles, UserPlus
 } from "lucide-react";
 import { closeAdminGate } from "@/components/AdminLoginGate";
 import { useLocation } from "wouter";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
@@ -43,10 +46,43 @@ export default function Admin() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  const [notifyDialog, setNotifyDialog] = useState<{ uid: string; name: string; email: string } | null>(null);
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [notifyType, setNotifyType] = useState("upgrade");
+  const [sendingNotify, setSendingNotify] = useState(false);
+
   function handleAdminLogout() {
     closeAdminGate();
     setLocation("/");
   }
+
+  function openNotifyDialog(user: any) {
+    setNotifyDialog({ uid: user.id, name: user.name || user.email, email: user.email });
+    setNotifyTitle("عرض ترقية حصري 🎉");
+    setNotifyMessage(`مرحباً ${user.name || ""}،\n\nنودّ إعلامك بأن حسابك مؤهل للترقية إلى خطة Pro بشكل فوري. تواصل معنا للاستفادة من هذا العرض.`);
+    setNotifyType("upgrade");
+  }
+
+  async function sendNotification() {
+    if (!notifyDialog || !notifyTitle.trim() || !notifyMessage.trim()) return;
+    setSendingNotify(true);
+    try {
+      await api.admin.notifyUser(notifyDialog.uid, notifyTitle.trim(), notifyMessage.trim(), notifyType);
+      toast({ title: `✅ تم إرسال الإشعار إلى ${notifyDialog.name}` });
+      setNotifyDialog(null);
+      setNotifyTitle("");
+      setNotifyMessage("");
+    } catch (e: any) {
+      toast({ title: "فشل إرسال الإشعار", description: e.message, variant: "destructive" });
+    } finally {
+      setSendingNotify(false);
+    }
+  }
+
+  const newestUsers = [...users].sort((a, b) =>
+    new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+  ).slice(0, 6);
 
   useEffect(() => {
     loadData();
@@ -270,6 +306,72 @@ export default function Admin() {
   return (
     <Layout>
       <div className="space-y-8">
+        {/* Notify Dialog */}
+        <Dialog open={!!notifyDialog} onOpenChange={open => !open && setNotifyDialog(null)}>
+          <DialogContent className="sm:max-w-md" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-amber-500" />
+                إرسال إشعار إلى {notifyDialog?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label className="text-sm">نوع الإشعار</Label>
+                <div className="flex gap-2">
+                  {[
+                    { value: "upgrade", label: "ترقية", icon: Crown },
+                    { value: "info", label: "معلومة", icon: Bell },
+                    { value: "warning", label: "تنبيه", icon: AlertTriangle },
+                  ].map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setNotifyType(value)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md border text-xs font-medium transition-colors ${notifyType === value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted"}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notify-title" className="text-sm">العنوان</Label>
+                <Input
+                  id="notify-title"
+                  value={notifyTitle}
+                  onChange={e => setNotifyTitle(e.target.value)}
+                  placeholder="عنوان الإشعار..."
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notify-msg" className="text-sm">الرسالة</Label>
+                <Textarea
+                  id="notify-msg"
+                  value={notifyMessage}
+                  onChange={e => setNotifyMessage(e.target.value)}
+                  placeholder="اكتب رسالتك هنا..."
+                  rows={4}
+                  className="resize-none text-sm"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 flex-row-reverse sm:flex-row-reverse">
+              <Button variant="outline" onClick={() => setNotifyDialog(null)}>إلغاء</Button>
+              <Button
+                onClick={sendNotification}
+                disabled={sendingNotify || !notifyTitle.trim() || !notifyMessage.trim()}
+                className="gap-2"
+              >
+                {sendingNotify ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                إرسال
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -315,6 +417,49 @@ export default function Admin() {
             </Card>
           ))}
         </div>
+
+        {/* Newest Users */}
+        {!isLoading && newestUsers.length > 0 && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-primary" />
+                أحدث المستخدمين
+                <Badge variant="secondary" className="text-xs">{newestUsers.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {newestUsers.map((user: any) => (
+                  <div key={user.id} className="flex items-center gap-3 p-3 rounded-lg bg-background border hover:shadow-sm transition-shadow">
+                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-bold text-primary text-sm">
+                      {(user.name || user.email || "?")[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{user.name || "—"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                        {user.createdAt ? format(new Date(user.createdAt), "MMM d, yyyy") : "—"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={user.plan === "pro" ? "default" : "secondary"} className="text-[10px] h-4 px-1.5">
+                        {user.plan === "pro" ? "Pro" : "Free"}
+                      </Badge>
+                      <Button
+                        variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-amber-600"
+                        title="إرسال إشعار"
+                        onClick={() => openNotifyDialog(user)}
+                      >
+                        <Bell className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="users" className="w-full">
@@ -450,6 +595,9 @@ export default function Admin() {
                                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                                 ) : (
                                   <>
+                                    <Button variant="ghost" size="icon" title="إرسال إشعار" onClick={() => openNotifyDialog(user)}>
+                                      <Bell className="h-4 w-4 text-amber-500" />
+                                    </Button>
                                     {user.suspended ? (
                                       <Button variant="ghost" size="icon" title="إلغاء التعليق" onClick={() => handleUnsuspend(user.id)}>
                                         <UserCheck className="h-4 w-4 text-green-500" />

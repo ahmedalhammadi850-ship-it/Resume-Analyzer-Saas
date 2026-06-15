@@ -7,6 +7,7 @@ import usersRouter from "./users.js";
 import analysesRouter from "./analyses.js";
 import settingsRouter from "./settings.js";
 import pricingRouter from "./pricing.js";
+import notificationsRouter from "./notifications.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(analysesRouter);
 router.use(settingsRouter);
 router.use(pricingRouter);
 router.use(n8nProxyRouter);
+router.use(notificationsRouter);
 
 export default router;

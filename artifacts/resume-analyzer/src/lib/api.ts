@@ -58,6 +58,8 @@ export const api = {
   admin: {
     stats: () => request<any>("/admin/stats"),
     users: () => request<any[]>("/admin/users"),
+    notifyUser: (uid: string, title: string, message: string, type?: string) =>
+      request<any>(`/admin/notify/${uid}`, { method: "POST", body: JSON.stringify({ title, message, type }) }),
     suspendUser: (uid: string) =>
       request<any>(`/admin/users/${uid}/suspend`, { method: "PATCH" }),
     unsuspendUser: (uid: string) =>
@@ -86,6 +88,12 @@ export const api = {
     get: () => fetch("/api/pricing-config").then(r => r.json()),
     update: (patch: Record<string, unknown>) =>
       request<any>("/pricing-config", { method: "PATCH", body: JSON.stringify(patch) }),
+  },
+  notifications: {
+    list: () => request<any[]>("/notifications"),
+    unreadCount: () => request<{ count: number }>("/notifications/unread-count"),
+    markRead: (id: string) => request<any>(`/notifications/${id}/read`, { method: "PATCH" }),
+    markAllRead: () => request<any>("/notifications/read-all", { method: "PATCH" }),
   },
   n8nProxy: (webhookUrl: string, body: Record<string, unknown>) =>
     request<any>("/n8n-proxy", { method: "POST", body: JSON.stringify({ webhook_url: webhookUrl, ...body }) }),

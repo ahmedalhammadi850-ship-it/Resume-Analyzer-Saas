@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { LanguageToggle } from "./LanguageToggle";
+import { NotificationsBell } from "./NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { 
   LayoutDashboard, 
@@ -136,13 +137,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
           
           <div className="flex items-center gap-2">
+            <NotificationsBell />
             <LanguageToggle />
             <ThemeToggle />
           </div>
         </header>
 
-        {/* Desktop Header (just theme toggle for now) */}
-        <header className="hidden lg:flex justify-end p-4 sticky top-0 z-10 bg-muted/30 backdrop-blur-sm gap-4 items-center">
+        {/* Desktop Header */}
+        <header className="hidden lg:flex justify-end p-4 sticky top-0 z-10 bg-muted/30 backdrop-blur-sm gap-3 items-center">
+          <NotificationsBell />
           <LanguageToggle />
           <ThemeToggle />
         </header>
