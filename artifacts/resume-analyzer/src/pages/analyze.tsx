@@ -244,7 +244,7 @@ export default function Analyze() {
                   </TabsContent>
                 </CardContent>
 
-                <CardFooter className="border-t bg-muted/20 py-4 flex items-center justify-between">
+                <CardFooter className="border-t bg-muted/20 py-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                   <div className="text-sm text-muted-foreground">
                     {isFreeUser ? (
                       <span><strong>{userProfile?.remainingScans}</strong> {t("analyze.freeScansRemaining")}</span>
@@ -252,7 +252,7 @@ export default function Analyze() {
                       <span>{t("analyze.unlimitedScans")}</span>
                     )}
                   </div>
-                  <Button type="submit" disabled={isProcessing || outOfScans || !file} size="lg">
+                  <Button type="submit" disabled={isProcessing || outOfScans || !file} size="lg" className="w-full sm:w-auto">
                     {activeTab === "jd_match" ? t("analyze.analyzeBtn") : t("analyze.reviewBtn")}
                   </Button>
                 </CardFooter>

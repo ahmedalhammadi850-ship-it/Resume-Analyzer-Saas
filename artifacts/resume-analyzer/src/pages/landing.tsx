@@ -17,13 +17,13 @@ export default function Landing() {
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 lg:py-32 bg-background">
+      <section className="relative overflow-hidden py-16 md:py-24 lg:py-32 bg-background">
         <div className="absolute inset-0 bg-primary/5 [mask-image:linear-gradient(to_bottom,white,transparent)]" />
-        <div className="container relative z-10 text-center space-y-8 max-w-4xl mx-auto">
+        <div className="container relative z-10 text-center space-y-6 md:space-y-8 max-w-4xl mx-auto px-4">
           <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold border-transparent bg-primary/10 text-primary">
             {t("landing.badge")}
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground">
             {t("landing.heroTitle1")}<br />
             <span className="text-primary">{t("landing.heroTitle2")}</span>
           </h1>
@@ -40,21 +40,21 @@ export default function Landing() {
               <Link href="/pricing">{t("landing.ctaPricing")}</Link>
             </Button>
           </div>
-          <div className="pt-8 text-sm text-muted-foreground flex items-center justify-center gap-6">
-            <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t("landing.freeTrial")}</span>
-            <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t("landing.noCreditCard")}</span>
+          <div className="pt-6 text-sm text-muted-foreground flex flex-wrap items-center justify-center gap-4 md:gap-6">
+            <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> {t("landing.freeTrial")}</span>
+            <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> {t("landing.noCreditCard")}</span>
           </div>
         </div>
       </section>
 
       {/* How it Works */}
-      <section className="py-24 bg-muted/30">
-        <div className="container px-10">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">{t("landing.howItWorksTitle")}</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{t("landing.howItWorksSubtitle")}</p>
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="container px-4 md:px-10">
+          <div className="text-center mb-10 md:mb-16 space-y-4">
+            <h2 className="text-2xl md:text-4xl font-bold">{t("landing.howItWorksTitle")}</h2>
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">{t("landing.howItWorksSubtitle")}</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
             <Card className="bg-background border-none shadow-md">
               <CardContent className="pt-8 space-y-4 text-center">
                 <div className="h-16 w-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
@@ -87,9 +87,9 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="py-24">
-        <div className="container px-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <section className="py-16 md:py-24">
+        <div className="container px-4 md:px-10">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             <div className="space-y-8">
               <h2 className="text-3xl md:text-4xl font-bold leading-tight">{t("landing.featuresTitle")}</h2>
               <ul className="space-y-6">
@@ -145,8 +145,8 @@ export default function Landing() {
       </section>
 
       {/* FAQ */}
-      <section className="py-24 bg-muted/30">
-        <div className="container max-w-3xl px-10">
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="container max-w-3xl px-4 md:px-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold">{t("landing.faqTitle")}</h2>
           </div>
