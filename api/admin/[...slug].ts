@@ -12,8 +12,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   cors(res);
   if (req.method === "OPTIONS") { res.status(204).end(); return; }
 
-  const _s = req.query.slug;
-  const slug: string[] = Array.isArray(_s) ? _s : _s ? [_s] : [];
+  const rawPath = (req.url ?? "").split("?")[0];
+  const adminPath = rawPath.replace(/^\/api\/admin\/?/, "");
+  const slug = adminPath ? adminPath.split("/").filter(Boolean) : [];
   const [section, param1, param2] = slug;
   let db: ReturnType<typeof getAdminFirestore>;
   try { db = getAdminFirestore(); } catch (err: unknown) {
