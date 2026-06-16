@@ -17,6 +17,7 @@ const ar = {
       pricing: "الأسعار",
       aboutUs: "من نحن",
       resumeBuilder: "إنشاء سيرة ذاتية",
+      menu: "قائمة التنقل",
     },
 
     // About page
