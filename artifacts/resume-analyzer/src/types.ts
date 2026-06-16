@@ -63,7 +63,7 @@ export interface UpgradeRequest {
 export const N8N_WEBHOOK_JD =
   "https://ahmed112233.app.n8n.cloud/webhook/628cdfcd-4800-4277-83a6-c99ee4992aa8";
 export const N8N_WEBHOOK_GENERAL =
-  "https://ahmed11ali.app.n8n.cloud/webhook/df12d3bb-295b-452f-92ab-c3fea3532a52";
+  "https://ahmed112233.app.n8n.cloud/webhook/df12d3bb-295b-452f-92ab-c3fea3532a52";
 export const N8N_WEBHOOK_UPGRADE =
   "https://ahmed11ali.app.n8n.cloud/webhook/2f6b38a8-cde2-4029-9b59-a3b6d1a33eb4";
 export const N8N_WEBHOOK_CREATE_CV =
