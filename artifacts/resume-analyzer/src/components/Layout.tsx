@@ -128,7 +128,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side={isRtl ? "right" : "left"} className="p-0 w-72">
+            <SheetContent side={isRtl ? "right" : "left"} className="p-0 w-72" aria-describedby={undefined}>
               <SheetTitle className="sr-only">{t("nav.menu")}</SheetTitle>
               <NavContent />
             </SheetContent>
