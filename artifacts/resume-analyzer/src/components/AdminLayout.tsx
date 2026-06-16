@@ -11,6 +11,8 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
+  SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { closeAdminGate } from "./AdminLoginGate";
@@ -172,6 +174,8 @@ export function AdminLayout({ children, activeTab, onTabChange }: AdminLayoutPro
               </Button>
             </SheetTrigger>
             <SheetContent side={isRtl ? "right" : "left"} className="p-0 w-64">
+              <SheetTitle className="sr-only">لوحة الإدارة</SheetTitle>
+              <SheetDescription className="sr-only">قائمة التنقل في لوحة الإدارة</SheetDescription>
               <SidebarContent />
             </SheetContent>
           </Sheet>

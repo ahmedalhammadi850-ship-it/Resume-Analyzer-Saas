@@ -19,6 +19,7 @@ import {
   Sheet,
   SheetContent,
   SheetTitle,
+  SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -126,8 +127,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side={isRtl ? "right" : "left"} className="p-0 w-72" aria-describedby={undefined}>
+            <SheetContent side={isRtl ? "right" : "left"} className="p-0 w-72">
               <SheetTitle className="sr-only">{t("nav.menu")}</SheetTitle>
+              <SheetDescription className="sr-only">{t("nav.menu")}</SheetDescription>
               <NavContent />
             </SheetContent>
           </Sheet>
