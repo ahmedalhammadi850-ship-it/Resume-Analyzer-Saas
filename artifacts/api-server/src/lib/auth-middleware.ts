@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { getAdminAuth, getAdminFirestore } from "./firebase-admin.js";
-import { ADMIN_EMAILS } from "./constants.js";
+import { ADMIN_EMAILS, ADMIN_API_KEY } from "./constants.js";
 
 export interface AuthUser {
   uid: string;
@@ -37,6 +37,12 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const adminKey = req.headers["x-admin-key"];
+  if (adminKey && adminKey === ADMIN_API_KEY) {
+    next();
+    return;
+  }
+
   await requireAuth(req, res, async () => {
     const uid = req.user!.uid;
     try {

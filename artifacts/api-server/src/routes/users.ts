@@ -198,6 +198,7 @@ router.post("/users/upgrade-request", requireAuth, async (req, res) => {
     const doc = await db.collection("users").doc(uid).get();
     if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
     const u = doc.data()!;
+    const now = new Date().toISOString();
     await db.collection("users").doc(uid).update({
       upgradeRequest: {
         userId: uid,
@@ -205,9 +206,26 @@ router.post("/users/upgrade-request", requireAuth, async (req, res) => {
         name: u.name,
         status: "pending",
         n8nSent: n8nSent ?? false,
-        createdAt: new Date().toISOString(),
+        createdAt: now,
       },
     });
+
+    const adminsSnap = await db.collection("users").where("role", "==", "admin").get();
+    const batch = db.batch();
+    adminsSnap.docs.forEach(adminDoc => {
+      if (adminDoc.id === uid) return;
+      const notifRef = db.collection("notifications").doc();
+      batch.set(notifRef, {
+        userId: adminDoc.id,
+        title: "طلب ترقية جديد 🔔",
+        message: `المستخدم ${u.name || u.email} أرسل إيصال تحويل ويطلب الترقية إلى Pro. راجع طلبات الترقية.`,
+        type: "upgrade",
+        read: false,
+        createdAt: now,
+      });
+    });
+    await batch.commit();
+
     const updated = await db.collection("users").doc(uid).get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
