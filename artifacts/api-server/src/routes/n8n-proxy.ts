@@ -1,53 +1,53 @@
 import { Router } from "express";
-import multer from "multer";
 import { requireAuth } from "../lib/auth-middleware.js";
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-router.post("/n8n-proxy", requireAuth, upload.any(), async (req, res) => {
-  const contentType = req.headers["content-type"] ?? "";
-  const isMultipart = contentType.includes("multipart/form-data");
+router.post("/n8n-proxy", requireAuth, async (req, res) => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const { webhook_url, ...rest } = body;
 
-  let webhookUrl: string;
+  if (!webhook_url || typeof webhook_url !== "string" || !webhook_url.startsWith("https://")) {
+    res.status(400).json({ error: "webhook_url مطلوب" });
+    return;
+  }
+
+  const fileKeys = Object.keys(rest).filter((k) => k.endsWith("__base64"));
+  const hasFiles = fileKeys.length > 0;
+
   let forwardBody: BodyInit;
   const forwardHeaders: Record<string, string> = {};
 
-  if (isMultipart) {
-    webhookUrl = (req.body as Record<string, string>).webhook_url ?? "";
-    if (!webhookUrl || !webhookUrl.startsWith("https://")) {
-      res.status(400).json({ error: "webhook_url مطلوب" });
-      return;
-    }
-
+  if (hasFiles) {
     const form = new FormData();
 
-    for (const [key, value] of Object.entries(req.body as Record<string, string>)) {
-      if (key !== "webhook_url") {
-        form.append(key, value);
-      }
+    for (const base64Key of fileKeys) {
+      const fieldName = base64Key.replace("__base64", "");
+      const base64 = rest[base64Key] as string;
+      const fileName = (rest[`${fieldName}__name`] as string) || fieldName;
+      const mimeType = (rest[`${fieldName}__type`] as string) || "application/octet-stream";
+
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType });
+      form.append(fieldName, blob, fileName);
     }
 
-    const files = (req.files as Express.Multer.File[]) ?? [];
-    for (const file of files) {
-      const blob = new Blob([file.buffer], { type: file.mimetype });
-      form.append(file.fieldname, blob, file.originalname);
+    for (const [key, value] of Object.entries(rest)) {
+      if (!key.endsWith("__base64") && !key.endsWith("__name") && !key.endsWith("__type")) {
+        form.append(key, String(value));
+      }
     }
 
     forwardBody = form;
   } else {
-    const { webhook_url, ...body } = req.body as { webhook_url: string; [key: string]: unknown };
-    webhookUrl = webhook_url ?? "";
-    if (!webhookUrl || !webhookUrl.startsWith("https://")) {
-      res.status(400).json({ error: "webhook_url مطلوب" });
-      return;
-    }
     forwardHeaders["Content-Type"] = "application/json";
-    forwardBody = JSON.stringify(body);
+    forwardBody = JSON.stringify(rest);
   }
 
   try {
-    const n8nRes = await fetch(webhookUrl, {
+    const n8nRes = await fetch(webhook_url, {
       method: "POST",
       headers: forwardHeaders,
       body: forwardBody,

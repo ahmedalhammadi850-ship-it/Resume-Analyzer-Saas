@@ -104,8 +104,21 @@ export const api = {
   },
   n8nProxy: (webhookUrl: string, body: Record<string, unknown>) =>
     request<any>("/n8n-proxy", { method: "POST", body: JSON.stringify({ webhook_url: webhookUrl, ...body }) }),
-  n8nProxyForm: (webhookUrl: string, formData: FormData) => {
-    formData.append("webhook_url", webhookUrl);
-    return requestForm<any>("/n8n-proxy", formData);
+  n8nProxyForm: async (webhookUrl: string, formData: FormData) => {
+    const payload: Record<string, unknown> = { webhook_url: webhookUrl };
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        const buffer = await value.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        payload[`${key}__base64`] = btoa(binary);
+        payload[`${key}__name`] = value.name;
+        payload[`${key}__type`] = value.type || "application/octet-stream";
+      } else {
+        payload[key] = value;
+      }
+    }
+    return request<any>("/n8n-proxy", { method: "POST", body: JSON.stringify(payload) });
   },
 };
