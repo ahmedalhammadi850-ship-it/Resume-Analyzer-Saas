@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import {
-  GoogleAuthProvider,
-  signInWithPopup,
   signInWithEmailAndPassword,
   sendEmailVerification,
 } from "firebase/auth";
@@ -19,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
-import { LogIn, Mail, Lock, Chrome, RefreshCw } from "lucide-react";
+import { LogIn, Mail, Lock, RefreshCw } from "lucide-react";
 
 export default function Login() {
   const { userProfile, loading, needsVerification } = useAuth();
@@ -62,18 +60,6 @@ export default function Login() {
           setError(err.message || "Login failed. Please try again.");
       }
     } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleGoogleLogin() {
-    setError("");
-    setSubmitting(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (err: any) {
-      setError(err.message || "Google sign-in failed.");
       setSubmitting(false);
     }
   }
@@ -156,25 +142,6 @@ export default function Login() {
           <CardDescription>Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleGoogleLogin}
-            disabled={submitting}
-          >
-            <Chrome className="h-4 w-4" />
-            Continue with Google
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">or continue with email</span>
-            </div>
-          </div>
-
           <form onSubmit={handleEmailLogin} className="flex flex-col gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
