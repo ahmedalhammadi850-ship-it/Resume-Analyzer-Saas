@@ -11,23 +11,9 @@ export interface AuthUser {
   name: string;
 }
 
-function isAdminEmail(email: string): boolean {
+export function isAdminEmail(email: string): boolean {
   const normalized = email.trim().toLowerCase();
   return ADMIN_EMAILS.some(e => e.trim().toLowerCase() === normalized);
-}
-
-// Extract project_id from FIREBASE_SERVICE_ACCOUNT as a reliable fallback
-function getProjectId(): string | undefined {
-  const direct = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
-  if (direct) return direct;
-  try {
-    const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (sa) {
-      const parsed = JSON.parse(sa.trim()) as { project_id?: string };
-      if (parsed.project_id) return parsed.project_id;
-    }
-  } catch {}
-  return undefined;
 }
 
 // Cache Google's Firebase public keys (rotated every ~6h by Google)
@@ -65,7 +51,7 @@ async function verifyFirebaseToken(idToken: string): Promise<AuthUser> {
     iat: number;
   };
 
-  const projectId = getProjectId();
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
   const now = Math.floor(Date.now() / 1000);
 
   if (payload.exp < now) throw new Error("Token expired");
@@ -126,7 +112,7 @@ export async function requireAdmin(
     const db = getAdminFirestore();
     const doc = await db.collection("users").doc(user.uid).get();
     const data = doc.data();
-    // Check role OR email (from JWT or Firestore) case-insensitively
+    // Check role OR email (JWT email or Firestore email) — case-insensitive
     const firestoreEmail = (data?.email as string) ?? "";
     const isAdmin =
       data?.role === "admin" ||
@@ -142,5 +128,3 @@ export async function requireAdmin(
     return null;
   }
 }
-
-export { isAdminEmail };

@@ -3,6 +3,9 @@
   "installCommand": "pnpm install",
   "buildCommand": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run build",
   "outputDirectory": "artifacts/resume-analyzer/dist",
+  "env": {
+    "FIREBASE_PROJECT_ID": "project-ats-aff49"
+  },
   "rewrites": [
     { "source": "/api/admin/:slug*", "destination": "/api/admin/[...slug]" },
     { "source": "/api/healthz",       "destination": "/api/settings" },
