@@ -1,16 +1,31 @@
 ---
-name: Vercel catch-all base path bug
-description: [[...slug]] optional catch-all doesn't match the base directory path in Vercel; routes with slugs work but base paths 404
+name: Vercel catch-all routing bug
+description: [[...slug]] optional catch-all is unreliable for named sub-paths in Vercel; always use explicit files for static routes.
 ---
 
-In Vercel serverless functions, `api/foo/[[...slug]].ts` (optional catch-all) is supposed to match both `/api/foo` and `/api/foo/bar`. In practice, it reliably matches paths WITH slug segments (e.g. `/api/auth/me` where slug=["me"]) but NOT the base path without any segments (`/api/analyses` with slug=[]).
+# Vercel `[[...slug]]` Catch-all Routing Bug
 
-**Why:** Vercel's internal routing may not resolve the optional catch-all for the exact directory base path in all configurations. Routes like `/api/auth/me` worked because they always include a slug.
+## The Rule
+Never rely solely on `[[...slug]]` catch-all files for named/static sub-paths in Vercel. Always create explicit `.ts` files for static routes.
 
-**How to apply:** When a `[[...slug]].ts` file needs to handle the base path (no additional segments), split it into:
-- `api/foo.ts` — handles `GET /api/foo`, `POST /api/foo` (base path operations)
-- `api/foo/[id].ts` — handles `GET /api/foo/:id` (per-ID operations)
+**Why:** Two separate failure modes:
+1. `[[...slug]]` does NOT reliably match the base directory path (e.g. `/api/analyses` with slug=[]) — use `api/foo.ts` for base path.
+2. For named sub-paths (e.g. `/api/users/me`), `req.query.slug` may arrive as a **string** (`"me"`) instead of an **array** (`["me"]`). Casting with `as string[]` makes `slug[0]` = `"m"` (first char), causing all `if (action === "me")` checks to fail → falls through to 404.
 
-The `[[...slug]].ts` catch-all can remain for sub-paths that always have slugs (like `/unread-count`, `/read-all`).
+**How to apply:**
+- Create an explicit file for every static named path: `api/users/me.ts`, `api/admin/stats.ts`, etc.
+- Keep catch-all only for dynamic segments with user IDs (e.g. `/api/admin/users/[uid]/plan`).
+- If you must use a catch-all, always guard slug with: `const slug = Array.isArray(_s) ? _s : _s ? [_s] : [];`
 
-Also: simplify `vercel.json` SPA rewrite from complex negative-lookahead regex `/((?!api/).*)` to plain `/(.*)`  → since Vercel processes serverless functions BEFORE rewrites, API routes are never caught by the SPA fallback.
+## Explicit files in this project (replaces catch-all for these paths)
+- `api/users/me.ts` — GET/PATCH /api/users/me
+- `api/users/upgrade-request.ts` — POST /api/users/upgrade-request
+- `api/notifications/unread-count.ts` — GET /api/notifications/unread-count
+- `api/notifications/read-all.ts` — PATCH /api/notifications/read-all
+- `api/admin/setup.ts` — GET /api/admin/setup
+- `api/admin/stats.ts` — GET /api/admin/stats
+- `api/admin/users.ts` — GET /api/admin/users
+- `api/admin/upgrade-requests.ts` — GET /api/admin/upgrade-requests
+
+## SPA rewrite note
+Vercel processes serverless functions BEFORE rewrites, so API routes are never caught by the SPA fallback `/((?!api/.*)` — the negative lookahead is safe but unnecessary for function routes.
