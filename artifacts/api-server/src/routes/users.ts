@@ -154,9 +154,10 @@ router.patch("/admin/upgrade-requests/:requestId/approve", requireAdmin, async (
     const doc = await db.collection("users").doc(requestId).get();
     if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
     const existing = (doc.data()?.upgradeRequest as any) ?? {};
+    const now = new Date().toISOString();
     await db.collection("users").doc(requestId).update({
-      plan: "pro", remainingScans: 25,
-      upgradeRequest: { ...existing, status: "approved", reviewedAt: new Date().toISOString() },
+      plan: "pro", remainingScans: 25, planRenewedAt: now,
+      upgradeRequest: { ...existing, status: "approved", reviewedAt: now },
     });
     const updated = await db.collection("users").doc(requestId).get();
     res.json({ id: updated.id, ...updated.data() });

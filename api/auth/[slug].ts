@@ -3,6 +3,13 @@ import { requireAuth } from "../_auth";
 import { getAdminFirestore } from "../_firebase-admin";
 
 const FREE_PLAN_LIMIT = 1;
+const PLAN_LIMITS: Record<string, number> = { free: 1, starter: 7, pro: 25 };
+
+function getNextRenewal(planRenewedAt: string): Date {
+  const d = new Date(planRenewedAt);
+  d.setDate(d.getDate() + 30);
+  return d;
+}
 
 function cors(res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -23,7 +30,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       const db = getAdminFirestore();
       const doc = await db.collection("users").doc(user.uid).get();
       if (doc.exists) {
-        res.status(200).json({ id: doc.id, ...doc.data() });
+        const data = doc.data()!;
+        if (data.plan && data.plan !== "free" && data.planRenewedAt) {
+          const nextRenewal = getNextRenewal(data.planRenewedAt as string);
+          if (new Date() >= nextRenewal) {
+            const limit = PLAN_LIMITS[data.plan as string] ?? 1;
+            await db.collection("users").doc(user.uid).update({
+              remainingScans: limit,
+              planRenewedAt: nextRenewal.toISOString(),
+            });
+            const refreshed = await db.collection("users").doc(user.uid).get();
+            res.status(200).json({ id: refreshed.id, ...refreshed.data() });
+            return;
+          }
+        }
+        res.status(200).json({ id: doc.id, ...data });
         return;
       }
       const newUser = {

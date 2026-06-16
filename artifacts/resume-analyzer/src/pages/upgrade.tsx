@@ -44,6 +44,8 @@ export default function Upgrade() {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const isRenewal = userProfile?.plan !== "free" && userProfile?.plan != null;
+
   const steps = [
     { num: "١", text: t("upgrade.step1") },
     { num: "٢", text: t("upgrade.step2") },
@@ -127,8 +129,12 @@ export default function Upgrade() {
     <Layout>
       <div className="max-w-2xl mx-auto space-y-8 py-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">{t("upgrade.title")}</h1>
-          <p className="text-muted-foreground">{t("upgrade.subtitle")}</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isRenewal ? t("upgrade.renewTitle") : t("upgrade.title")}
+          </h1>
+          <p className="text-muted-foreground">
+            {isRenewal ? t("upgrade.renewSubtitle") : t("upgrade.subtitle")}
+          </p>
         </div>
 
         <Card>
@@ -202,7 +208,10 @@ export default function Upgrade() {
               </div>
             )}
             <Button className="w-full h-11 text-base font-semibold" disabled={!file || loading} onClick={handleSubmit}>
-              {loading ? <><Loader2 className="h-4 w-4 me-2 animate-spin" />{t("upgrade.submitting")}</> : <><Upload className="h-4 w-4 me-2" />{t("upgrade.submitBtn")}</>}
+              {loading
+                ? <><Loader2 className="h-4 w-4 me-2 animate-spin" />{t("upgrade.submitting")}</>
+                : <><Upload className="h-4 w-4 me-2" />{isRenewal ? t("upgrade.renewBtn") : t("upgrade.submitBtn")}</>
+              }
             </Button>
           </CardContent>
         </Card>

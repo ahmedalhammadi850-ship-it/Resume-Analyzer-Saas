@@ -6,11 +6,79 @@ import { Analysis } from "@/types";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Plus, Target, Zap, Clock, ChevronRight } from "lucide-react";
+import { FileText, Plus, Target, Zap, Clock, ChevronRight, RefreshCw, CalendarDays } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fmtDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
+
+function SubscriptionCard() {
+  const { userProfile } = useAuth();
+  const [, setLocation] = useLocation();
+  const { t } = useTranslation();
+
+  if (!userProfile || userProfile.plan === "free") return null;
+
+  const planRenewedAt = (userProfile as any).planRenewedAt as string | undefined;
+  const nextRenewalDate = planRenewedAt
+    ? new Date(new Date(planRenewedAt).getTime() + 30 * 24 * 60 * 60 * 1000)
+    : null;
+
+  const planLimit = userProfile.plan === "pro" ? 25 : userProfile.plan === "starter" ? 7 : 1;
+  const remaining = userProfile.remainingScans ?? 0;
+  const progressPct = Math.round((remaining / planLimit) * 100);
+
+  return (
+    <Card className="border-primary/40 bg-primary/5">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">{t("dashboard.subscription")}</CardTitle>
+            <Badge className="capitalize">{userProfile.plan}</Badge>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs"
+            onClick={() => setLocation("/upgrade")}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            {t("dashboard.renewBtn")}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{t("dashboard.scansRemaining")}</span>
+            <span className="font-semibold">{remaining} / {planLimit}</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+        {nextRenewalDate && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              {t("dashboard.nextRenewal")}:{" "}
+              <span className="font-medium text-foreground">
+                {nextRenewalDate.toLocaleDateString()}
+              </span>
+            </span>
+          </div>
+        )}
+        {!planRenewedAt && (
+          <p className="text-xs text-muted-foreground">{t("dashboard.renewNowDesc")}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Dashboard() {
   const { userProfile } = useAuth();
@@ -108,6 +176,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        <SubscriptionCard />
 
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
           <Card className="lg:col-span-4">

@@ -206,10 +206,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       const doc = await db.collection("users").doc(param1).get();
       if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
       const existing = (doc.data()?.upgradeRequest as any) ?? {};
+      const now = new Date().toISOString();
       await db.collection("users").doc(param1).update({
         plan: "pro",
         remainingScans: 25,
-        upgradeRequest: { ...existing, status: "approved", reviewedAt: new Date().toISOString() },
+        planRenewedAt: now,
+        upgradeRequest: { ...existing, status: "approved", reviewedAt: now },
       });
       const updated = await db.collection("users").doc(param1).get();
       res.status(200).json({ id: updated.id, ...updated.data() });

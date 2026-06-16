@@ -160,6 +160,11 @@ const en = {
       viewAll: "View All",
       viewReport: "View Report",
       score: "Score",
+      subscription: "Your Subscription",
+      renewBtn: "Renew",
+      scansRemaining: "Scans Remaining",
+      nextRenewal: "Next Renewal",
+      renewNowDesc: "Renew your subscription to get more scans.",
     },
 
     // Analyze page
@@ -431,6 +436,9 @@ const en = {
     upgrade: {
       title: "Upgrade to Pro",
       subtitle: "Follow the steps below to complete your upgrade and unlock all Pro features.",
+      renewTitle: "Renew Subscription",
+      renewSubtitle: "Renew your subscription to receive new scans for the next month.",
+      renewBtn: "Submit Renewal Request",
       stepsTitle: "Upgrade Steps",
       step1: "Transfer the amount via bank transfer or e-wallet",
       step2: "Take a clear photo of the transfer receipt",
