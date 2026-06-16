@@ -5,7 +5,6 @@
   "outputDirectory": "artifacts/resume-analyzer/dist",
   "rewrites": [
     { "source": "/api/healthz", "destination": "/api/health" },
-    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
