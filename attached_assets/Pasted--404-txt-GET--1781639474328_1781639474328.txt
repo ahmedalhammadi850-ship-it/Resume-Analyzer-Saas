@@ -1,0 +1,165 @@
+# مهمة: اكتشاف وإصلاح أخطاء 404 في لوحة الإدارة
+
+أواجه الأخطاء التالية في الإنتاج:
+
+```txt
+GET /api/admin/stats 404 (Not Found)
+GET /api/admin/users 404 (Not Found)
+GET /api/admin/upgrade-requests 404 (Not Found)
+
+Admin load error Error: Not found
+Failed to load upgrade requests Error: Not found
+```
+
+المشروع عبارة عن:
+
+* React Frontend
+* Express API
+* Firebase Firestore
+* Vercel Deployment
+
+أريد منك التحقيق الكامل وإصلاح المشكلة، وليس مجرد التخمين.
+
+## المطلوب
+
+### المرحلة 1: اكتشاف مكان الاستدعاء
+
+ابحث عن جميع الأماكن التي تستدعي:
+
+```js
+/api/admin/stats
+/api/admin/users
+/api/admin/upgrade-requests
+```
+
+واعرض:
+
+* اسم الملف
+* رقم السطر
+* الكود الذي ينفذ الطلب
+
+---
+
+### المرحلة 2: التحقق من وجود Routes
+
+افحص:
+
+```txt
+api/
+api/admin/
+artifacts/api-server/
+src/routes/
+server/
+backend/
+```
+
+وابحث عن:
+
+```txt
+GET /api/admin/stats
+GET /api/admin/users
+GET /api/admin/upgrade-requests
+```
+
+واعرض:
+
+* هل الـ Route موجود؟
+* اسم الملف
+* رقم السطر
+
+---
+
+### المرحلة 3: مقارنة Frontend مع Backend
+
+أنشئ جدولاً:
+
+| Frontend Request | Backend Route Exists? | الملف |
+| ---------------- | --------------------- | ----- |
+
+واكتشف أي Route مفقود.
+
+---
+
+### المرحلة 4: التحقق من Vercel
+
+افحص:
+
+```json
+vercel.json
+```
+
+وتحقق من:
+
+* rewrites
+* redirects
+* outputDirectory
+* api routing
+
+وهل تمنع الوصول إلى:
+
+```txt
+/ api/admin/*
+```
+
+---
+
+### المرحلة 5: التحقق من بنية Vercel Functions
+
+افحص مجلد:
+
+```txt
+api/admin/
+```
+
+وتأكد أن الملفات المطلوبة موجودة مثل:
+
+```txt
+stats.ts
+users.ts
+upgrade-requests.ts
+```
+
+وإذا لم تكن موجودة فحدد ذلك بوضوح.
+
+---
+
+### المرحلة 6: إصلاح المشكلة
+
+إذا كان Route مفقوداً:
+
+* أنشئ الملف المناسب.
+* اكتب الكود كاملاً.
+* استخدم Firebase Firestore الحقيقي.
+
+إذا كان Route موجوداً:
+
+* اكتشف سبب 404.
+* أصلح المسار.
+* أصلح الاستيرادات.
+* أصلح التصدير export default.
+
+---
+
+### المرحلة 7: التحقق النهائي
+
+بعد الإصلاح:
+
+1. نفذ build.
+2. افحص جميع أخطاء TypeScript.
+3. تأكد أن:
+
+```txt
+GET /api/admin/stats        => 200
+GET /api/admin/users        => 200
+GET /api/admin/upgrade-requests => 200
+```
+
+---
+
+### قواعد مهمة
+
+* لا تفترض أي شيء.
+* اعرض الأدلة من الملفات الحقيقية.
+* اذكر اسم الملف ورقم السطر لكل مشكلة.
+* نفذ الإصلاح مباشرة.
+* اعرض diff لكل ملف تم تعديله.
