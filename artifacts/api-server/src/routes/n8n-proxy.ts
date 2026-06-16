@@ -15,7 +15,7 @@ router.post("/n8n-proxy", requireAuth, async (req, res) => {
   const fileKeys = Object.keys(rest).filter((k) => k.endsWith("__base64"));
   const hasFiles = fileKeys.length > 0;
 
-  let forwardBody: BodyInit;
+  let forwardBody: string | FormData;
   const forwardHeaders: Record<string, string> = {};
 
   if (hasFiles) {

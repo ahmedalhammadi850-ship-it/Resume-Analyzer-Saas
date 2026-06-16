@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Plus, Target, Zap, Clock, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { fmtDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
@@ -143,7 +144,7 @@ export default function Dashboard() {
                         <p className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3 shrink-0" />
                           <span className="truncate">
-                            {formatDistanceToNow(new Date(analysis.createdAt), { addSuffix: true })}
+                            {fmtDate(analysis.createdAt, (d) => formatDistanceToNow(d, { addSuffix: true }), "")}
                             <span className="mx-1">•</span>
                             {analysis.analysisType === "jd_match" ? t("dashboard.jdMatch") : t("dashboard.generalReview")}
                           </span>

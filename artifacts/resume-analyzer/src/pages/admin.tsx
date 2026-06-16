@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
+import { safeDate, fmtDate } from "@/lib/date-utils";
 import { type PricingConfig } from "@/types";
 import { invalidatePricingCache } from "@/hooks/usePricing";
 
@@ -74,7 +75,7 @@ export default function Admin() {
   }
 
   const newestUsers = [...users].sort((a, b) =>
-    new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+    (safeDate(b.createdAt)?.getTime() ?? 0) - (safeDate(a.createdAt)?.getTime() ?? 0)
   ).slice(0, 6);
 
   useEffect(() => {
@@ -423,7 +424,7 @@ export default function Admin() {
                       <p className="text-sm font-medium truncate">{user.name || "—"}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                        {user.createdAt ? format(new Date(user.createdAt), "MMM d, yyyy") : "—"}
+                        {fmtDate(user.createdAt, (d) => format(d, "MMM d, yyyy"))}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -547,7 +548,7 @@ export default function Admin() {
                               </div>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {user.createdAt ? format(new Date(user.createdAt), "MMM d, yyyy") : "—"}
+                              {fmtDate(user.createdAt, (d) => format(d, "MMM d, yyyy"))}
                             </TableCell>
                             <TableCell>
                               <div className="flex justify-center gap-1">
@@ -627,7 +628,7 @@ export default function Admin() {
                               }
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {req.createdAt ? format(new Date(req.createdAt), "MMM d, yyyy – HH:mm") : "—"}
+                              {fmtDate(req.createdAt, (d) => format(d, "MMM d, yyyy – HH:mm"))}
                             </TableCell>
                             <TableCell>
                               {req.status === "pending" ? (
@@ -651,7 +652,7 @@ export default function Admin() {
                                 </div>
                               ) : (
                                 <div className="text-center text-xs text-muted-foreground">
-                                  {req.reviewedAt ? format(new Date(req.reviewedAt), "MMM d") : "—"}
+                                  {fmtDate(req.reviewedAt, (d) => format(d, "MMM d"))}
                                 </div>
                               )}
                             </TableCell>

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { fmtDate } from "@/lib/date-utils";
 import { FileText, Search, Filter, Calendar, Target, ChevronRight } from "lucide-react";
 
 export default function History() {
@@ -93,7 +94,7 @@ export default function History() {
                       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
-                          {format(new Date(analysis.createdAt), "MMM d, yyyy")}
+                          {fmtDate(analysis.createdAt, (d) => format(d, "MMM d, yyyy"))}
                         </div>
                         {analysis.analysisType === "jd_match" && analysis.results.job_title != null && (
                           <>

@@ -46,7 +46,7 @@ router.get("/admin/stats", requireAdmin, async (_req, res) => {
     const activeSubscribers = users.filter(u => u.plan === "pro").length;
     const monthStart = new Date();
     monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
-    const newThisMonth = users.filter(u => new Date(u.createdAt) >= monthStart).length;
+    const newThisMonth = users.filter(u => new Date(u.createdAt as string) >= monthStart).length;
     res.json({
       totalUsers: users.length,
       totalAnalyses: analysesSnap.size,
@@ -60,65 +60,68 @@ router.get("/admin/stats", requireAdmin, async (_req, res) => {
 });
 
 router.patch("/admin/users/:uid/suspend", requireAdmin, async (req, res) => {
+  const uid = String(req.params.uid);
   try {
     const db = getAdminFirestore();
-    await db.collection("users").doc(req.params.uid).update({ suspended: true });
-    const doc = await db.collection("users").doc(req.params.uid).get();
+    await db.collection("users").doc(uid).update({ suspended: true });
+    const doc = await db.collection("users").doc(uid).get();
     res.json({ id: doc.id, ...doc.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 router.patch("/admin/users/:uid/unsuspend", requireAdmin, async (req, res) => {
+  const uid = String(req.params.uid);
   try {
     const db = getAdminFirestore();
-    await db.collection("users").doc(req.params.uid).update({ suspended: false });
-    const doc = await db.collection("users").doc(req.params.uid).get();
+    await db.collection("users").doc(uid).update({ suspended: false });
+    const doc = await db.collection("users").doc(uid).get();
     res.json({ id: doc.id, ...doc.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 router.delete("/admin/users/:uid", requireAdmin, async (req, res) => {
+  const uid = String(req.params.uid);
   try {
     const db = getAdminFirestore();
-    await db.collection("users").doc(req.params.uid).delete();
+    await db.collection("users").doc(uid).delete();
     res.json({ ok: true });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 router.patch("/admin/users/:uid/scans", requireAdmin, async (req, res) => {
+  const uid = String(req.params.uid);
   const { amount } = req.body as { amount: number };
   try {
     const db = getAdminFirestore();
-    const doc = await db.collection("users").doc(req.params.uid).get();
+    const doc = await db.collection("users").doc(uid).get();
     if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
     const current = (doc.data()?.remainingScans ?? 0) as number;
-    await db.collection("users").doc(req.params.uid).update({ remainingScans: current + amount });
-    const updated = await db.collection("users").doc(req.params.uid).get();
+    await db.collection("users").doc(uid).update({ remainingScans: current + amount });
+    const updated = await db.collection("users").doc(uid).get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 router.patch("/admin/users/:uid/role", requireAdmin, async (req, res) => {
+  const uid = String(req.params.uid);
   const { role } = req.body as { role: string };
   if (!["user", "admin"].includes(role)) { res.status(400).json({ error: "Invalid role" }); return; }
   try {
     const db = getAdminFirestore();
-    await db.collection("users").doc(req.params.uid).update({ role });
-    const doc = await db.collection("users").doc(req.params.uid).get();
+    await db.collection("users").doc(uid).update({ role });
+    const doc = await db.collection("users").doc(uid).get();
     res.json({ id: doc.id, ...doc.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 router.patch("/admin/users/:uid/plan", requireAdmin, async (req, res) => {
+  const uid = String(req.params.uid);
   const { plan } = req.body as { plan: string };
   if (!["free", "pro"].includes(plan)) { res.status(400).json({ error: "Invalid plan" }); return; }
   try {
     const db = getAdminFirestore();
-    await db.collection("users").doc(req.params.uid).update({
-      plan,
-      remainingScans: plan === "pro" ? 25 : 1,
-    });
-    const doc = await db.collection("users").doc(req.params.uid).get();
+    await db.collection("users").doc(uid).update({ plan, remainingScans: plan === "pro" ? 25 : 1 });
+    const doc = await db.collection("users").doc(uid).get();
     res.json({ id: doc.id, ...doc.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -133,14 +136,10 @@ router.get("/admin/upgrade-requests", requireAdmin, async (_req, res) => {
       .map((u: any) => {
         const r = u.upgradeRequest;
         return {
-          requestId: u.id,
-          userId: u.id,
-          email: r.email ?? u.email,
-          name: r.name ?? u.name,
-          status: r.status ?? "pending",
-          n8nSent: r.n8nSent ?? false,
-          createdAt: r.createdAt ?? "",
-          reviewedAt: r.reviewedAt,
+          requestId: u.id, userId: u.id,
+          email: r.email ?? u.email, name: r.name ?? u.name,
+          status: r.status ?? "pending", n8nSent: r.n8nSent ?? false,
+          createdAt: r.createdAt ?? "", reviewedAt: r.reviewedAt,
         };
       })
       .sort((a: any, b: any) => (b.createdAt > a.createdAt ? 1 : -1));
@@ -149,31 +148,32 @@ router.get("/admin/upgrade-requests", requireAdmin, async (_req, res) => {
 });
 
 router.patch("/admin/upgrade-requests/:requestId/approve", requireAdmin, async (req, res) => {
+  const requestId = String(req.params.requestId);
   try {
     const db = getAdminFirestore();
-    const doc = await db.collection("users").doc(req.params.requestId).get();
+    const doc = await db.collection("users").doc(requestId).get();
     if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
     const existing = (doc.data()?.upgradeRequest as any) ?? {};
-    await db.collection("users").doc(req.params.requestId).update({
-      plan: "pro",
-      remainingScans: 25,
+    await db.collection("users").doc(requestId).update({
+      plan: "pro", remainingScans: 25,
       upgradeRequest: { ...existing, status: "approved", reviewedAt: new Date().toISOString() },
     });
-    const updated = await db.collection("users").doc(req.params.requestId).get();
+    const updated = await db.collection("users").doc(requestId).get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 router.patch("/admin/upgrade-requests/:requestId/reject", requireAdmin, async (req, res) => {
+  const requestId = String(req.params.requestId);
   try {
     const db = getAdminFirestore();
-    const doc = await db.collection("users").doc(req.params.requestId).get();
+    const doc = await db.collection("users").doc(requestId).get();
     if (!doc.exists) { res.status(404).json({ error: "User not found" }); return; }
     const existing = (doc.data()?.upgradeRequest as any) ?? {};
-    await db.collection("users").doc(req.params.requestId).update({
+    await db.collection("users").doc(requestId).update({
       upgradeRequest: { ...existing, status: "rejected", reviewedAt: new Date().toISOString() },
     });
-    const updated = await db.collection("users").doc(req.params.requestId).get();
+    const updated = await db.collection("users").doc(requestId).get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -201,15 +201,10 @@ router.post("/users/upgrade-request", requireAuth, async (req, res) => {
     const now = new Date().toISOString();
     await db.collection("users").doc(uid).update({
       upgradeRequest: {
-        userId: uid,
-        email: u.email,
-        name: u.name,
-        status: "pending",
-        n8nSent: n8nSent ?? false,
-        createdAt: now,
+        userId: uid, email: u.email, name: u.name,
+        status: "pending", n8nSent: n8nSent ?? false, createdAt: now,
       },
     });
-
     const adminsSnap = await db.collection("users").where("role", "==", "admin").get();
     const batch = db.batch();
     adminsSnap.docs.forEach(adminDoc => {
@@ -219,13 +214,10 @@ router.post("/users/upgrade-request", requireAuth, async (req, res) => {
         userId: adminDoc.id,
         title: "طلب ترقية جديد 🔔",
         message: `المستخدم ${u.name || u.email} أرسل إيصال تحويل ويطلب الترقية إلى Pro. راجع طلبات الترقية.`,
-        type: "upgrade",
-        read: false,
-        createdAt: now,
+        type: "upgrade", read: false, createdAt: now,
       });
     });
     await batch.commit();
-
     const updated = await db.collection("users").doc(uid).get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (err: any) { res.status(500).json({ error: err.message }); }

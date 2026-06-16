@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { fmtDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
 
 interface Notification {
@@ -156,7 +157,7 @@ export function NotificationsBell() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{n.message}</p>
                     <p className="text-[10px] text-muted-foreground/60 mt-1">
-                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: ar })}
+                      {fmtDate(n.createdAt, (d) => formatDistanceToNow(d, { addSuffix: true, locale: ar }), "")}
                     </p>
                   </div>
                 </div>
