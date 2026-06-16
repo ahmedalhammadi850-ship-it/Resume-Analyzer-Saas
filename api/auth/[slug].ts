@@ -14,9 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   cors(res);
   if (req.method === "OPTIONS") { res.status(204).end(); return; }
 
-  const _s = req.query.slug;
-  const slug: string[] = Array.isArray(_s) ? _s : _s ? [_s] : [];
-  const action = slug[0] ?? "me";
+  const action = req.query.slug as string;
 
   if (action === "me" && req.method === "GET") {
     const user = await requireAuth(req, res);
