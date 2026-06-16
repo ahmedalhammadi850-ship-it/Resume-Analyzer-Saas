@@ -4,7 +4,9 @@
   "buildCommand": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/resume-analyzer run build",
   "outputDirectory": "artifacts/resume-analyzer/dist",
   "rewrites": [
-    { "source": "/api/healthz", "destination": "/api/health" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/healthz",       "destination": "/api/settings" },
+    { "source": "/api/health",        "destination": "/api/settings" },
+    { "source": "/api/pricing-config","destination": "/api/settings" },
+    { "source": "/((?!api/).*)",      "destination": "/index.html"   }
   ]
 }
