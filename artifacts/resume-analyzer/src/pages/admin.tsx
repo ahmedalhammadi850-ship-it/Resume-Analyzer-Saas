@@ -35,7 +35,7 @@ export default function Admin() {
   const [addingScans, setAddingScans] = useState<Record<string, boolean>>({});
   const [processingRequest, setProcessingRequest] = useState<Record<string, boolean>>({});
   const [processingUser, setProcessingUser] = useState<Record<string, boolean>>({});
-  const [appSettings, setAppSettings] = useState<AppSettings>({ resumeNameChangeFree: false });
+  const [appSettings, setAppSettings] = useState<AppSettings>({});
   const [savingSettings, setSavingSettings] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [pricingConfig, setPricingConfig] = useState<PricingConfig | null>(null);
@@ -835,36 +835,10 @@ export default function Admin() {
             <Card>
               <CardHeader className="flex flex-row items-center gap-2">
                 <Settings className="h-5 w-5 text-muted-foreground" />
-                <CardTitle>إعدادات الميزات</CardTitle>
+                <CardTitle>إعدادات النظام</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${appSettings.resumeNameChangeFree ? "border-green-400 bg-green-50/40 dark:bg-green-900/10" : "border-border bg-muted/20"}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 ${appSettings.resumeNameChangeFree ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
-                      {appSettings.resumeNameChangeFree ? <Unlock className="h-4 w-4 text-green-600" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">تغيير اسم السيرة الذاتية</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {appSettings.resumeNameChangeFree ? "مجاني — يمكن لأي مستخدم تغيير اسمه بحرية" : "مدفوع — يحتاج دفع لتغيير الاسم المحفوظ"}
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant={appSettings.resumeNameChangeFree ? "destructive" : "default"}
-                    className="min-w-[90px] gap-1.5"
-                    disabled={savingSettings.resumeNameChangeFree}
-                    onClick={() => toggleSetting("resumeNameChangeFree")}
-                  >
-                    {savingSettings.resumeNameChangeFree
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : appSettings.resumeNameChangeFree
-                        ? <><Lock className="h-3.5 w-3.5" />اجعله مدفوعاً</>
-                        : <><Unlock className="h-3.5 w-3.5" />اجعله مجانياً</>
-                    }
-                  </Button>
-                </div>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">لا توجد إعدادات متاحة حالياً.</p>
               </CardContent>
             </Card>
           </TabsContent>

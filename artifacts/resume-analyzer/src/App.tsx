@@ -22,7 +22,6 @@ import About from "@/pages/about";
 import Settings from "@/pages/settings";
 import Admin from "@/pages/admin";
 import { AdminLoginGate } from "@/components/AdminLoginGate";
-import ResumeBuilder from "@/pages/resume-builder";
 import Upgrade from "@/pages/upgrade";
 import NotFound from "@/pages/not-found";
 
@@ -58,10 +57,6 @@ function Router() {
         <ProtectedRoute><Settings /></ProtectedRoute>
       </Route>
       
-      <Route path="/resume-builder">
-        <ProtectedRoute><ResumeBuilder /></ProtectedRoute>
-      </Route>
-
       <Route path="/upgrade">
         <ProtectedRoute><Upgrade /></ProtectedRoute>
       </Route>

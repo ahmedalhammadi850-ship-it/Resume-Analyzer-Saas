@@ -9,7 +9,6 @@ export interface UserProfile {
   plan: string;
   remainingScans: number;
   role: string;
-  resumeName?: string;
   createdAt: string;
 }
 

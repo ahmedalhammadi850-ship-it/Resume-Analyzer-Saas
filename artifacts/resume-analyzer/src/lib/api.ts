@@ -50,7 +50,7 @@ export const api = {
   },
   users: {
     me: () => request<any>("/users/me"),
-    updateMe: (data: Partial<{ resumeName: string }>) =>
+    updateMe: (data: Partial<Record<string, unknown>>) =>
       request<any>("/users/me", { method: "PATCH", body: JSON.stringify(data) }),
     createUpgradeRequest: (n8nSent: boolean) =>
       request<any>("/users/upgrade-request", { method: "POST", body: JSON.stringify({ n8nSent }) }),

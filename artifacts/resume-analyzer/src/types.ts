@@ -10,7 +10,6 @@ export interface UserProfile {
   remainingScans: number;
   role: UserRole;
   createdAt: string;
-  resumeName?: string;
 }
 
 export interface Analysis {
@@ -36,7 +35,7 @@ export interface AnalysisResults {
 }
 
 export interface AppSettings {
-  resumeNameChangeFree: boolean;
+  [key: string]: unknown;
 }
 
 export interface AdminStats {
@@ -66,8 +65,6 @@ export const N8N_WEBHOOK_GENERAL =
   import.meta.env.VITE_N8N_WEBHOOK_GENERAL as string;
 export const N8N_WEBHOOK_UPGRADE =
   import.meta.env.VITE_N8N_WEBHOOK_UPGRADE as string;
-export const N8N_WEBHOOK_CREATE_CV =
-  import.meta.env.VITE_N8N_WEBHOOK_CREATE_CV as string;
 export const FREE_PLAN_LIMIT = 1;
 export const STARTER_PLAN_LIMIT = 7;
 export const PRO_PLAN_LIMIT = 25;
