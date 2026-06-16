@@ -3,17 +3,66 @@ import { requireAuth } from "../lib/auth-middleware.js";
 
 const router = Router();
 
+const ALLOWED_N8N_DOMAINS = [
+  "n8n.cloud",
+  "app.n8n.cloud",
+];
+
+function isAllowedWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return false;
+    return ALLOWED_N8N_DOMAINS.some(
+      (domain) => parsed.hostname === domain || parsed.hostname.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
+const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+]);
+
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
 router.post("/n8n-proxy", requireAuth, async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>;
   const { webhook_url, ...rest } = body;
 
-  if (!webhook_url || typeof webhook_url !== "string" || !webhook_url.startsWith("https://")) {
+  if (!webhook_url || typeof webhook_url !== "string") {
     res.status(400).json({ error: "webhook_url مطلوب" });
+    return;
+  }
+
+  if (!isAllowedWebhookUrl(webhook_url)) {
+    res.status(400).json({ error: "webhook_url غير مسموح به" });
     return;
   }
 
   const fileKeys = Object.keys(rest).filter((k) => k.endsWith("__base64"));
   const hasFiles = fileKeys.length > 0;
+
+  if (hasFiles) {
+    for (const base64Key of fileKeys) {
+      const fieldName = base64Key.replace("__base64", "");
+      const mimeType = (rest[`${fieldName}__type`] as string) || "";
+      const base64 = rest[base64Key] as string;
+
+      if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+        res.status(400).json({ error: `نوع الملف غير مدعوم: ${mimeType}` });
+        return;
+      }
+
+      const estimatedSize = Math.floor((base64.length * 3) / 4);
+      if (estimatedSize > MAX_FILE_SIZE_BYTES) {
+        res.status(400).json({ error: "حجم الملف يتجاوز الحد المسموح (5MB)" });
+        return;
+      }
+    }
+  }
 
   let forwardBody: string | FormData;
   const forwardHeaders: Record<string, string> = {};
