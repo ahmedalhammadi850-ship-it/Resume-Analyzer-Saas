@@ -15,7 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  const slug = (req.query.slug ?? []) as string[];
+  const _s = req.query.slug;
+  const slug: string[] = Array.isArray(_s) ? _s : _s ? [_s] : [];
   const action = slug[0];
   let db: ReturnType<typeof getAdminFirestore>;
   try { db = getAdminFirestore(); } catch (err: unknown) {
