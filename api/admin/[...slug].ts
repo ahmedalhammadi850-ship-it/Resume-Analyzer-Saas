@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireAuth, requireAdmin } from "../_auth";
+import { requireAuth, requireAdmin, isAdminEmail } from "../_auth";
 import { getAdminFirestore } from "../_firebase-admin";
 
 function cors(res: VercelResponse) {
@@ -26,7 +26,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     if (!user) return;
     try {
       const snap = await db.collection("users").where("role", "==", "admin").limit(1).get();
-      if (!snap.empty) { res.status(403).json({ error: "Admin already exists" }); return; }
+      // Allow if: no admin exists yet, OR the requester's email is in ADMIN_EMAILS
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      const firestoreEmail = (userDoc.data()?.email as string) ?? "";
+      const callerIsAdminEmail = isAdminEmail(user.email) || isAdminEmail(firestoreEmail);
+      if (!snap.empty && !callerIsAdminEmail) {
+        res.status(403).json({ error: "Admin already exists" });
+        return;
+      }
       await db.collection("users").doc(user.uid).update({ role: "admin" });
       const doc = await db.collection("users").doc(user.uid).get();
       res.status(200).json({ ok: true, user: { id: doc.id, ...doc.data() } });

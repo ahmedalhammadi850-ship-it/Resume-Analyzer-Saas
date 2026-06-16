@@ -47,7 +47,11 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
       const db = getAdminFirestore();
       const doc = await db.collection("users").doc(uid).get();
       const user = doc.data();
-      if (!user || (user.role !== "admin" && !ADMIN_EMAILS.includes(user.email))) {
+      const firestoreEmail = (user?.email as string) ?? "";
+      const isAdmin =
+        user?.role === "admin" ||
+        ADMIN_EMAILS.some(e => e.trim().toLowerCase() === firestoreEmail.trim().toLowerCase());
+      if (!user || !isAdmin) {
         res.status(403).json({ error: "Forbidden" });
         return;
       }

@@ -11,6 +11,25 @@ export interface AuthUser {
   name: string;
 }
 
+function isAdminEmail(email: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  return ADMIN_EMAILS.some(e => e.trim().toLowerCase() === normalized);
+}
+
+// Extract project_id from FIREBASE_SERVICE_ACCOUNT as a reliable fallback
+function getProjectId(): string | undefined {
+  const direct = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
+  if (direct) return direct;
+  try {
+    const sa = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (sa) {
+      const parsed = JSON.parse(sa.trim()) as { project_id?: string };
+      if (parsed.project_id) return parsed.project_id;
+    }
+  } catch {}
+  return undefined;
+}
+
 // Cache Google's Firebase public keys (rotated every ~6h by Google)
 let _keysCache: Record<string, string> = {};
 let _keysCacheExpiry = 0;
@@ -46,13 +65,15 @@ async function verifyFirebaseToken(idToken: string): Promise<AuthUser> {
     iat: number;
   };
 
-  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
+  const projectId = getProjectId();
   const now = Math.floor(Date.now() / 1000);
 
   if (payload.exp < now) throw new Error("Token expired");
   if (payload.iat > now + 300) throw new Error("Token issued in the future");
-  if (payload.iss !== `https://securetoken.google.com/${projectId}`) throw new Error("Invalid issuer");
-  if (payload.aud !== projectId) throw new Error("Invalid audience");
+  if (projectId && payload.iss !== `https://securetoken.google.com/${projectId}`) {
+    throw new Error("Invalid issuer");
+  }
+  if (projectId && payload.aud !== projectId) throw new Error("Invalid audience");
   if (!payload.sub) throw new Error("Missing subject");
   if (header.alg !== "RS256") throw new Error("Unexpected algorithm");
 
@@ -105,7 +126,13 @@ export async function requireAdmin(
     const db = getAdminFirestore();
     const doc = await db.collection("users").doc(user.uid).get();
     const data = doc.data();
-    if (!data || (data.role !== "admin" && !ADMIN_EMAILS.includes(user.email))) {
+    // Check role OR email (from JWT or Firestore) case-insensitively
+    const firestoreEmail = (data?.email as string) ?? "";
+    const isAdmin =
+      data?.role === "admin" ||
+      isAdminEmail(user.email) ||
+      isAdminEmail(firestoreEmail);
+    if (!data || !isAdmin) {
       res.status(403).json({ error: "Forbidden" });
       return null;
     }
@@ -115,3 +142,5 @@ export async function requireAdmin(
     return null;
   }
 }
+
+export { isAdminEmail };
