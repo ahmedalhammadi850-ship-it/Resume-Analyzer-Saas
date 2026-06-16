@@ -71,6 +71,10 @@ VITE_FIREBASE_APP_ID = "1:362356126985:web:0481a1dd4540577ee44fd8"
 VITE_FIREBASE_MEASUREMENT_ID = "G-2S1M8EZ81X"
 VITE_FIREBASE_API_KEY = "AIzaSyBUixvCEGp5BjzWVMUBwRpYxBK5jBlHfms"
 FIREBASE_PROJECT_ID = "project-ats-aff49"
+VITE_N8N_WEBHOOK_JD = "https://ahmed112233.app.n8n.cloud/webhook/628cdfcd-4800-4277-83a6-c99ee4992aa8"
+VITE_N8N_WEBHOOK_GENERAL = "https://ahmed112233.app.n8n.cloud/webhook/df12d3bb-295b-452f-92ab-c3fea3532a52"
+VITE_N8N_WEBHOOK_UPGRADE = "https://ahmed112233.app.n8n.cloud/webhook/2f6b38a8-cde2-4029-9b59-a3b6d1a33eb4"
+VITE_N8N_WEBHOOK_CREATE_CV = "https://ahmed112233.app.n8n.cloud/webhook/952cdd26-1852-4ba8-9a3c-0bd2c7e85f5e"
 
 [nix]
 channel = "stable-25_05"
