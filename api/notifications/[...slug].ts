@@ -19,25 +19,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const slug: string[] = Array.isArray(_s) ? _s : _s ? [_s] : [];
   const [id, action] = slug;
 
-  if (!id && req.method === "GET") {
-    try {
-      const db = getAdminFirestore();
-      const snap = await db.collection("notifications")
-        .where("userId", "==", user.uid)
-        .get();
-      const results = snap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-      results.sort((a: any, b: any) => {
-        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bTime - aTime;
-      });
-      res.status(200).json(results.slice(0, 50));
-    } catch {
-      res.status(200).json([]);
-    }
-    return;
-  }
-
   if (id === "unread-count" && req.method === "GET") {
     try {
       const db = getAdminFirestore();
