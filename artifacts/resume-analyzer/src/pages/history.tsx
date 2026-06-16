@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
@@ -14,6 +15,7 @@ import { fmtDate } from "@/lib/date-utils";
 import { FileText, Search, Filter, Calendar, Target, ChevronRight } from "lucide-react";
 
 export default function History() {
+  const { t } = useTranslation();
   const { userProfile } = useAuth();
   const [, setLocation] = useLocation();
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
@@ -46,26 +48,26 @@ export default function History() {
       <div className="space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Analysis History</h1>
-            <p className="text-muted-foreground mt-1">Review your past resume scans and track improvements.</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("history.title")}</h1>
+            <p className="text-muted-foreground mt-1">{t("history.subtitle")}</p>
           </div>
-          <Button onClick={() => setLocation("/analyze")}>New Analysis</Button>
+          <Button onClick={() => setLocation("/analyze")}>{t("history.newAnalysis")}</Button>
         </div>
 
         <Card>
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="relative flex-1 w-full">
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by filename or job title..."
-                  className="pl-9"
+                  placeholder={t("history.search")}
+                  className="ps-9"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <Button variant="outline" className="w-full sm:w-auto shrink-0 gap-2">
-                <Filter className="h-4 w-4" /> Filter
+                <Filter className="h-4 w-4" /> {t("history.filter")}
               </Button>
             </div>
           </CardHeader>
@@ -88,7 +90,7 @@ export default function History() {
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-semibold text-lg truncate">{analysis.fileName}</h4>
                         <Badge variant={analysis.analysisType === "jd_match" ? "default" : "secondary"}>
-                          {analysis.analysisType === "jd_match" ? "JD Match" : "General"}
+                          {analysis.analysisType === "jd_match" ? t("common.jdMatch") : t("common.general")}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -108,9 +110,9 @@ export default function History() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-6 sm:ml-auto">
+                    <div className="flex items-center gap-6 sm:ms-auto">
                       <div className="text-center">
-                        <div className="text-sm text-muted-foreground">Score</div>
+                        <div className="text-sm text-muted-foreground">{t("history.score")}</div>
                         <div className={`text-xl font-bold ${analysis.score >= 80 ? "text-green-500" : analysis.score >= 60 ? "text-yellow-500" : "text-red-500"}`}>
                           {analysis.score}%
                         </div>
@@ -123,7 +125,7 @@ export default function History() {
             ) : (
               <div className="py-16 text-center text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>No analyses found matching your search.</p>
+                <p>{search ? t("history.noResultsSearch") : t("history.noResultsDesc")}</p>
               </div>
             )}
           </CardContent>
