@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
-const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
+const ADMIN_EMAILS = ["123qwr23fsf@gmail.com"];
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

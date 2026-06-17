@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createVerify } from "node:crypto";
 import { getAdminFirestore } from "./_firebase-admin";
 
-export const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
+export const ADMIN_EMAILS = ["123qwr23fsf@gmail.com"];
 export const ADMIN_API_KEY = "admin7707";
 
 export interface AuthUser {
