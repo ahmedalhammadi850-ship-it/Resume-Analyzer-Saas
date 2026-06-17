@@ -2,7 +2,25 @@ import { auth } from "@/firebase";
 
 const BASE = "/api";
 
+// Waits for Firebase Auth to finish restoring the session from storage.
+// On a cold page load (Vercel production), auth.currentUser is null until
+// the first onAuthStateChanged fires — calling APIs before that sends
+// requests with no Authorization header and causes 401 "Not authenticated".
+let _authReady: Promise<void> | null = null;
+function waitForAuth(): Promise<void> {
+  if (!_authReady) {
+    _authReady = new Promise<void>((resolve) => {
+      const unsub = auth.onAuthStateChanged(() => {
+        unsub();
+        resolve();
+      });
+    });
+  }
+  return _authReady;
+}
+
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  await waitForAuth();
   const fbUser = auth.currentUser;
   if (fbUser) {
     try {
