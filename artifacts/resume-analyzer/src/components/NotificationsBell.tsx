@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { fmtDate } from "@/lib/date-utils";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Notification {
   id: string;
@@ -31,12 +32,14 @@ export function NotificationsBell() {
   const panelRef = useRef<HTMLDivElement>(null);
   const { i18n } = useTranslation();
   const isRtl = i18n.language === "ar";
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {

@@ -33,20 +33,6 @@ router.get("/notifications/unread-count", requireAuth, async (req, res) => {
   }
 });
 
-router.patch("/notifications/:id/read", requireAuth, async (req, res) => {
-  const uid = req.user!.uid;
-  const id = String(req.params.id);
-  try {
-    const db = getAdminFirestore();
-    const doc = await db.collection("notifications").doc(id).get();
-    if (!doc.exists || doc.data()?.userId !== uid) { res.status(404).json({ error: "Not found" }); return; }
-    await db.collection("notifications").doc(id).update({ read: true });
-    res.json({ ok: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.patch("/notifications/read-all", requireAuth, async (req, res) => {
   const uid = req.user!.uid;
   try {
@@ -55,6 +41,20 @@ router.patch("/notifications/read-all", requireAuth, async (req, res) => {
     const batch = db.batch();
     snap.docs.filter(d => d.data().read === false).forEach(d => batch.update(d.ref, { read: true }));
     await batch.commit();
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.patch("/notifications/:id/read", requireAuth, async (req, res) => {
+  const uid = req.user!.uid;
+  const id = String(req.params.id);
+  try {
+    const db = getAdminFirestore();
+    const doc = await db.collection("notifications").doc(id).get();
+    if (!doc.exists || doc.data()?.userId !== uid) { res.status(404).json({ error: "Not found" }); return; }
+    await db.collection("notifications").doc(id).update({ read: true });
     res.json({ ok: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
