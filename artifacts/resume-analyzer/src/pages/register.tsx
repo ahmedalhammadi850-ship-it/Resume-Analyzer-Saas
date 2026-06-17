@@ -1,6 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
-import { signInWithCustomToken } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+} from "firebase/auth";
 import { auth } from "@/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -14,18 +18,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
-import { UserPlus, User, Lock } from "lucide-react";
+import { UserPlus, Mail, Lock, User, MailCheck, RefreshCw } from "lucide-react";
 
 export default function Register() {
-  const { userProfile, loading } = useAuth();
+  const { userProfile, loading, recheckVerification } = useAuth();
   const [, setLocation] = useLocation();
   const { t } = useTranslation();
 
   const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [resending, setResending] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!loading && userProfile) {
@@ -33,31 +40,110 @@ export default function Register() {
     }
   }, [loading, userProfile, setLocation]);
 
+  useEffect(() => {
+    if (!verificationSent) return;
+    pollingRef.current = setInterval(async () => {
+      const verified = await recheckVerification();
+      if (verified) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        setLocation("/dashboard");
+      }
+    }, 3000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [verificationSent, recheckVerification, setLocation]);
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSubmitting(true);
     try {
-      const res = await fetch("/api/auth/register-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: username.trim(),
-          password,
-          name: name.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Registration failed. Please try again.");
-        return;
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      if (name.trim()) {
+        await updateProfile(credential.user, { displayName: name.trim() });
       }
-      await signInWithCustomToken(auth, data.customToken);
-    } catch {
-      setError("Registration failed. Please try again.");
+      await sendEmailVerification(credential.user);
+      setVerificationSent(true);
+    } catch (err: any) {
+      switch (err.code) {
+        case "auth/email-already-in-use":
+          setError("An account with this email already exists.");
+          break;
+        case "auth/weak-password":
+          setError("Password must be at least 6 characters.");
+          break;
+        case "auth/invalid-email":
+          setError("Please enter a valid email address.");
+          break;
+        default:
+          setError(err.message || "Registration failed. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleResend() {
+    const user = auth.currentUser;
+    if (!user) return;
+    setResending(true);
+    try {
+      await sendEmailVerification(user);
+    } catch {
+    } finally {
+      setResending(false);
+    }
+  }
+
+  if (verificationSent) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-muted/30 p-4">
+        <Link
+          href="/"
+          className="absolute top-6 start-6 font-bold text-xl tracking-tight text-primary flex items-center gap-2"
+        >
+          <span className="bg-primary text-primary-foreground px-2 py-1 rounded-md">AI</span>
+          <span>{t("brand")}</span>
+        </Link>
+
+        <Card className="w-full max-w-md border-border/50 shadow-xl text-center">
+          <CardHeader className="space-y-4 pb-2">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <MailCheck className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold tracking-tight">
+              Check your inbox
+            </CardTitle>
+            <CardDescription className="text-base">
+              We sent a verification link to{" "}
+              <span className="font-semibold text-foreground">{email}</span>.
+              Click the link to activate your account and access the dashboard.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 pt-4">
+            <p className="text-sm text-muted-foreground">
+              Didn't receive the email? Check your spam folder or resend it.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleResend}
+              disabled={resending}
+            >
+              <RefreshCw className={`h-4 w-4 ${resending ? "animate-spin" : ""}`} />
+              {resending ? "Sending..." : "Resend verification email"}
+            </Button>
+            <p className="text-sm text-center text-muted-foreground">
+              Already verified?{" "}
+              <Link href="/login" className="font-semibold text-primary hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -78,7 +164,7 @@ export default function Register() {
         <CardContent className="flex flex-col gap-4">
           <form onSubmit={handleRegister} className="flex flex-col gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Label htmlFor="name">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -94,24 +180,20 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium select-none">@</span>
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="your_username"
-                  className="pl-8"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  minLength={3}
-                  maxLength={30}
                   disabled={submitting}
-                  autoComplete="username"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">3–30 characters: letters, numbers, underscores</p>
             </div>
 
             <div className="space-y-2">
@@ -128,7 +210,6 @@ export default function Register() {
                   required
                   minLength={6}
                   disabled={submitting}
-                  autoComplete="new-password"
                 />
               </div>
             </div>

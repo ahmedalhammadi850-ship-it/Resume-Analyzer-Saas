@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { getAdminAuth, getAdminFirestore } from "./firebase-admin.js";
-import { ADMIN_EMAILS } from "./constants.js";
+import { ADMIN_EMAILS, ADMIN_API_KEY } from "./constants.js";
 
 export interface AuthUser {
   uid: string;
@@ -41,6 +41,14 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Admin API key bypass — used by the frontend admin gate session
+  const adminKey = req.headers["x-admin-key"];
+  if (adminKey && adminKey === ADMIN_API_KEY) {
+    req.user = { uid: "admin-gate", email: "admin@internal", name: "Admin" };
+    next();
+    return;
+  }
+
   await requireAuth(req, res, async () => {
     const uid = req.user!.uid;
     try {

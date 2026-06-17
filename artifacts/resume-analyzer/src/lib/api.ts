@@ -1,11 +1,20 @@
 import { auth } from "@/firebase";
 
 const BASE = "/api";
+const ADMIN_GATE_KEY = "admin_gate_session";
+const ADMIN_API_KEY = "admin7707";
 
-// Waits for Firebase Auth to finish restoring the session from storage.
-// On a cold page load (Vercel production), auth.currentUser is null until
-// the first onAuthStateChanged fires — calling APIs before that sends
-// requests with no Authorization header and causes 401 "Not authenticated".
+function isAdminGateOpen(): boolean {
+  try {
+    const raw = localStorage.getItem(ADMIN_GATE_KEY);
+    if (!raw) return false;
+    const { expires } = JSON.parse(raw) as { expires: number };
+    return Date.now() < expires;
+  } catch {
+    return false;
+  }
+}
+
 let _authReady: Promise<void> | null = null;
 function waitForAuth(): Promise<void> {
   if (!_authReady) {
@@ -48,6 +57,30 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// Admin requests always include x-admin-key when the gate is open,
+// bypassing Firebase Auth requirement for admin API routes.
+async function adminRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options?.headers as Record<string, string> ?? {}),
+  };
+  if (isAdminGateOpen()) {
+    headers["x-admin-key"] = ADMIN_API_KEY;
+  } else {
+    const authHeaders = await getAuthHeaders();
+    Object.assign(headers, authHeaders);
+  }
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw Object.assign(new Error(err.error || res.statusText), { status: res.status });
+  }
+  return res.json();
+}
+
 async function requestForm<T>(path: string, formData: FormData): Promise<T> {
   const authHeaders = await getAuthHeaders();
   const res = await fetch(`${BASE}${path}`, {
@@ -81,38 +114,38 @@ export const api = {
       request<any>("/analyses", { method: "POST", body: JSON.stringify(data) }),
   },
   admin: {
-    stats: () => request<any>("/admin/stats"),
-    users: () => request<any[]>("/admin/users"),
+    stats: () => adminRequest<any>("/admin/stats"),
+    users: () => adminRequest<any[]>("/admin/users"),
     notifyUser: (uid: string, title: string, message: string, type?: string) =>
-      request<any>(`/admin/notify/${uid}`, { method: "POST", body: JSON.stringify({ title, message, type }) }),
+      adminRequest<any>(`/admin/notify/${uid}`, { method: "POST", body: JSON.stringify({ title, message, type }) }),
     suspendUser: (uid: string) =>
-      request<any>(`/admin/users/${uid}/suspend`, { method: "PATCH" }),
+      adminRequest<any>(`/admin/users/${uid}/suspend`, { method: "PATCH" }),
     unsuspendUser: (uid: string) =>
-      request<any>(`/admin/users/${uid}/unsuspend`, { method: "PATCH" }),
+      adminRequest<any>(`/admin/users/${uid}/unsuspend`, { method: "PATCH" }),
     deleteUser: (uid: string) =>
-      request<any>(`/admin/users/${uid}`, { method: "DELETE" }),
+      adminRequest<any>(`/admin/users/${uid}`, { method: "DELETE" }),
     addScans: (uid: string, amount: number) =>
-      request<any>(`/admin/users/${uid}/scans`, { method: "PATCH", body: JSON.stringify({ amount }) }),
+      adminRequest<any>(`/admin/users/${uid}/scans`, { method: "PATCH", body: JSON.stringify({ amount }) }),
     changeRole: (uid: string, role: string) =>
-      request<any>(`/admin/users/${uid}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
+      adminRequest<any>(`/admin/users/${uid}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
     changePlan: (uid: string, plan: string) =>
-      request<any>(`/admin/users/${uid}/plan`, { method: "PATCH", body: JSON.stringify({ plan }) }),
-    upgradeRequests: () => request<any[]>("/admin/upgrade-requests"),
+      adminRequest<any>(`/admin/users/${uid}/plan`, { method: "PATCH", body: JSON.stringify({ plan }) }),
+    upgradeRequests: () => adminRequest<any[]>("/admin/upgrade-requests"),
     approveUpgrade: (requestId: string) =>
-      request<any>(`/admin/upgrade-requests/${requestId}/approve`, { method: "PATCH" }),
+      adminRequest<any>(`/admin/upgrade-requests/${requestId}/approve`, { method: "PATCH" }),
     rejectUpgrade: (requestId: string) =>
-      request<any>(`/admin/upgrade-requests/${requestId}/reject`, { method: "PATCH" }),
-    setup: () => request<any>("/admin/setup"),
+      adminRequest<any>(`/admin/upgrade-requests/${requestId}/reject`, { method: "PATCH" }),
+    setup: () => adminRequest<any>("/admin/setup"),
   },
   settings: {
-    get: () => request<any>("/settings"),
+    get: () => adminRequest<any>("/settings"),
     update: (patch: Record<string, unknown>) =>
-      request<any>("/settings", { method: "PATCH", body: JSON.stringify(patch) }),
+      adminRequest<any>("/settings", { method: "PATCH", body: JSON.stringify(patch) }),
   },
   pricing: {
     get: () => fetch("/api/pricing-config").then(r => r.json()),
     update: (patch: Record<string, unknown>) =>
-      request<any>("/pricing-config", { method: "PATCH", body: JSON.stringify(patch) }),
+      adminRequest<any>("/pricing-config", { method: "PATCH", body: JSON.stringify(patch) }),
   },
   notifications: {
     list: () => request<any[]>("/notifications"),

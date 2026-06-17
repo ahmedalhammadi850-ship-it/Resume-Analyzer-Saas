@@ -5,7 +5,6 @@ import { auth } from "@/firebase";
 export interface UserProfile {
   id: string;
   name: string;
-  username?: string;
   email: string;
   plan: string;
   remainingScans: number;
@@ -48,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   const refreshProfile = useCallback(async () => {
     if (!firebaseUser) return;
@@ -55,18 +55,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (profile) setUserProfile(profile);
   }, [firebaseUser]);
 
-  // Kept for backward compatibility — username-based accounts never need verification
   const recheckVerification = useCallback(async (): Promise<boolean> => {
-    return true;
+    const user = auth.currentUser;
+    if (!user) return false;
+    try {
+      await user.reload();
+      const refreshed = auth.currentUser;
+      if (refreshed?.emailVerified) {
+        setFirebaseUser(refreshed);
+        setNeedsVerification(false);
+        const profile = await fetchProfile(refreshed);
+        setUserProfile(profile);
+        return true;
+      }
+    } catch {}
+    return false;
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
+        if (!fbUser.emailVerified) {
+          setNeedsVerification(true);
+        } else {
+          setNeedsVerification(false);
+        }
         const profile = await fetchProfile(fbUser);
         setUserProfile(profile);
       } else {
+        setNeedsVerification(false);
         setUserProfile(null);
       }
       setLoading(false);
@@ -78,18 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await firebaseSignOut(auth);
     setUserProfile(null);
     setFirebaseUser(null);
+    setNeedsVerification(false);
   }
 
   return (
-    <AuthContext.Provider value={{
-      userProfile,
-      firebaseUser,
-      loading,
-      needsVerification: false,
-      logout,
-      refreshProfile,
-      recheckVerification,
-    }}>
+    <AuthContext.Provider value={{ userProfile, firebaseUser, loading, needsVerification, logout, refreshProfile, recheckVerification }}>
       {children}
     </AuthContext.Provider>
   );
