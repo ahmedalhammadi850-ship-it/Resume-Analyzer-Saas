@@ -1,3 +1,18 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+  <!-- Background -->
+  <rect width="180" height="180" rx="36" fill="#2563EB"/>
+
+  <!-- Document shape -->
+  <rect x="48" y="32" width="72" height="90" rx="8" fill="white" opacity="0.15"/>
+  <rect x="52" y="36" width="64" height="82" rx="6" fill="white"/>
+
+  <!-- Document lines -->
+  <rect x="64" y="56" width="40" height="5" rx="2.5" fill="#2563EB" opacity="0.5"/>
+  <rect x="64" y="68" width="52" height="5" rx="2.5" fill="#2563EB" opacity="0.35"/>
+  <rect x="64" y="80" width="46" height="5" rx="2.5" fill="#2563EB" opacity="0.35"/>
+  <rect x="64" y="92" width="34" height="5" rx="2.5" fill="#2563EB" opacity="0.35"/>
+
+  <!-- Checkmark circle -->
+  <circle cx="118" cy="120" r="28" fill="#16A34A"/>
+  <path d="M106 120 L115 130 L130 112" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
