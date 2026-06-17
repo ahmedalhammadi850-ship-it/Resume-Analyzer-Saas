@@ -51,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     if (!firebaseUser) return;
-    if (!firebaseUser.emailVerified) return;
     const profile = await fetchProfile(firebaseUser);
     if (profile) setUserProfile(profile);
   }, [firebaseUser]);
@@ -79,12 +78,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fbUser) {
         if (!fbUser.emailVerified) {
           setNeedsVerification(true);
-          setUserProfile(null);
         } else {
           setNeedsVerification(false);
-          const profile = await fetchProfile(fbUser);
-          setUserProfile(profile);
         }
+        const profile = await fetchProfile(fbUser);
+        setUserProfile(profile);
       } else {
         setNeedsVerification(false);
         setUserProfile(null);

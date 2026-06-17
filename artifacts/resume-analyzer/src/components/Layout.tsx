@@ -25,7 +25,7 @@ import {
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
-const ADMIN_EMAILS = ["123qwr23fsf@gmail.com"];
+import { ADMIN_EMAILS } from "@/lib/admin-constants";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { t, i18n } = useTranslation();

@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { N8N_WEBHOOK_JD, N8N_WEBHOOK_GENERAL } from "@/types";
 
 
-const ADMIN_EMAILS = ["123qwr23fdf@gmail.com"];
+import { ADMIN_EMAILS } from "@/lib/admin-constants";
 
 function extractScore(results: Record<string, unknown>): number {
   const candidates = [
