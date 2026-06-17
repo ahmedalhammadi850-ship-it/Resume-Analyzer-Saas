@@ -7,10 +7,18 @@
     "FIREBASE_PROJECT_ID": "project-ats-aff49"
   },
   "rewrites": [
-    { "source": "/api/admin/:slug*", "destination": "/api/admin/[...slug]" },
-    { "source": "/api/healthz",       "destination": "/api/settings" },
-    { "source": "/api/health",        "destination": "/api/settings" },
-    { "source": "/api/pricing-config","destination": "/api/settings" },
-    { "source": "/((?!api/).*)",      "destination": "/index.html"   }
+    { "source": "/api/admin/:slug*",         "destination": "/api/admin/[...slug]" },
+    { "source": "/api/notifications/:slug*", "destination": "/api/notifications/[...slug]" },
+    { "source": "/api/notifications",        "destination": "/api/notifications" },
+    { "source": "/api/analyses/:id",         "destination": "/api/analyses/[id]" },
+    { "source": "/api/analyses",             "destination": "/api/analyses" },
+    { "source": "/api/users/:slug",          "destination": "/api/users/[slug]" },
+    { "source": "/api/auth/:slug",           "destination": "/api/auth/[slug]" },
+    { "source": "/api/n8n-proxy",            "destination": "/api/n8n-proxy" },
+    { "source": "/api/settings",             "destination": "/api/settings" },
+    { "source": "/api/pricing-config",       "destination": "/api/settings" },
+    { "source": "/api/healthz",              "destination": "/api/settings" },
+    { "source": "/api/health",               "destination": "/api/settings" },
+    { "source": "/((?!api/).*)",             "destination": "/index.html" }
   ]
 }
