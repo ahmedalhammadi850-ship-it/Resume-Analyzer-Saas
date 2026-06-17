@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { requireAuth } from "../_auth";
+import { requireAuth, isAdminEmail } from "../_auth";
 import { getAdminFirestore } from "../_firebase-admin";
 
 const FREE_PLAN_LIMIT = 1;
@@ -31,18 +31,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       const doc = await db.collection("users").doc(user.uid).get();
       if (doc.exists) {
         const data = doc.data()!;
+        const updates: Record<string, unknown> = {};
+        // Auto-promote existing users whose email is in ADMIN_EMAILS
+        if (isAdminEmail(user.email) && data.role !== "admin") {
+          updates.role = "admin";
+        }
+        // Renew plan scans if expired
         if (data.plan && data.plan !== "free" && data.planRenewedAt) {
           const nextRenewal = getNextRenewal(data.planRenewedAt as string);
           if (new Date() >= nextRenewal) {
             const limit = PLAN_LIMITS[data.plan as string] ?? 1;
-            await db.collection("users").doc(user.uid).update({
-              remainingScans: limit,
-              planRenewedAt: nextRenewal.toISOString(),
-            });
-            const refreshed = await db.collection("users").doc(user.uid).get();
-            res.status(200).json({ id: refreshed.id, ...refreshed.data() });
-            return;
+            updates.remainingScans = limit;
+            updates.planRenewedAt = nextRenewal.toISOString();
           }
+        }
+        if (Object.keys(updates).length > 0) {
+          await db.collection("users").doc(user.uid).update(updates);
+          const refreshed = await db.collection("users").doc(user.uid).get();
+          res.status(200).json({ id: refreshed.id, ...refreshed.data() });
+          return;
         }
         res.status(200).json({ id: doc.id, ...data });
         return;
@@ -52,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         email: user.email,
         plan: "free",
         remainingScans: FREE_PLAN_LIMIT,
-        role: "user",
+        role: isAdminEmail(user.email) ? "admin" : "user",
         suspended: false,
         createdAt: new Date().toISOString(),
       };

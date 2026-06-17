@@ -101,6 +101,7 @@ export async function requireAdmin(
   req: VercelRequest,
   res: VercelResponse,
 ): Promise<AuthUser | null> {
+  // API key bypass for internal tooling
   const adminKey = req.headers["x-admin-key"];
   if (adminKey && adminKey === ADMIN_API_KEY) {
     return { uid: "admin", email: ADMIN_EMAILS[0], name: "Admin" };
@@ -108,23 +109,30 @@ export async function requireAdmin(
 
   const user = await requireAuth(req, res);
   if (!user) return null;
+
+  // Fast path: JWT email is in the hardcoded admin list — no Firestore round-trip needed
+  if (isAdminEmail(user.email)) {
+    console.log(`[admin] fast-path grant for ${user.email}`);
+    return user;
+  }
+
+  // Slow path: check Firestore for role:"admin" or email match
   try {
     const db = getAdminFirestore();
     const doc = await db.collection("users").doc(user.uid).get();
     const data = doc.data();
-    // Check role OR email (JWT email or Firestore email) — case-insensitive
     const firestoreEmail = (data?.email as string) ?? "";
-    const isAdmin =
-      data?.role === "admin" ||
-      isAdminEmail(user.email) ||
-      isAdminEmail(firestoreEmail);
-    if (!data || !isAdmin) {
+    const isAdmin = data?.role === "admin" || isAdminEmail(firestoreEmail);
+    console.log(`[admin] Firestore check uid=${user.uid} email=${user.email} role=${data?.role} isAdmin=${isAdmin}`);
+    if (!isAdmin) {
       res.status(403).json({ error: "Forbidden" });
       return null;
     }
     return user;
   } catch (err: unknown) {
-    res.status(500).json({ error: err instanceof Error ? err.message : "Error" });
+    const msg = err instanceof Error ? err.message : "Error";
+    console.error(`[admin] Firestore error for uid=${user.uid}:`, msg);
+    res.status(500).json({ error: msg });
     return null;
   }
 }
