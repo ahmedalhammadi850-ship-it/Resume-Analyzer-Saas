@@ -27,7 +27,7 @@ export default function About() {
       <section className="py-24 lg:py-32 bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,hsl(var(--primary)/0.1),transparent)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_0%,black,transparent)]" />
-        <div className="container relative z-10 max-w-3xl mx-auto text-center space-y-6 px-4">
+        <div className="relative z-10 w-full max-w-3xl mx-auto text-center space-y-6 px-4">
           <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
             {t("about.badge")}
           </div>
@@ -42,8 +42,8 @@ export default function About() {
 
       {/* ─── Stats ─── */}
       <section className="py-16 bg-primary text-primary-foreground">
-        <div className="container px-4">
-          <div className="grid grid-cols-3 divide-x divide-primary-foreground/20 max-w-3xl mx-auto text-center">
+        <div className="w-full max-w-3xl mx-auto px-4">
+          <div className="grid grid-cols-3 divide-x divide-primary-foreground/20 text-center">
             {stats.map((stat) => (
               <div key={stat.label} className="px-4 py-2">
                 <div className="text-3xl md:text-5xl font-black mb-1 tabular-nums">{stat.value}</div>
@@ -56,7 +56,7 @@ export default function About() {
 
       {/* ─── Story ─── */}
       <section className="py-24 bg-background">
-        <div className="container max-w-2xl mx-auto px-4">
+        <div className="w-full max-w-2xl mx-auto px-4">
           <div className="space-y-2 mb-10">
             <p className="text-sm font-semibold text-primary uppercase tracking-widest">{t("about.storyTag") || "Our Story"}</p>
             <h2 className="text-3xl font-bold">{t("about.storyTitle")}</h2>
@@ -71,7 +71,7 @@ export default function About() {
 
       {/* ─── Values ─── */}
       <section className="py-24 bg-muted/30">
-        <div className="container px-4">
+        <div className="w-full max-w-screen-xl mx-auto px-4">
           <div className="text-center mb-12 space-y-2">
             <p className="text-sm font-semibold text-primary uppercase tracking-widest">{t("about.valuesTag") || "Our Values"}</p>
             <h2 className="text-3xl font-bold">{t("about.valuesTitle")}</h2>
@@ -97,10 +97,10 @@ export default function About() {
 
       {/* ─── CTA ─── */}
       <section className="py-24 bg-background">
-        <div className="container max-w-xl mx-auto text-center space-y-6 px-4">
+        <div className="w-full max-w-xl mx-auto text-center space-y-6 px-4">
           <h2 className="text-3xl md:text-4xl font-bold">{t("about.ctaTitle")}</h2>
           <p className="text-muted-foreground">{t("about.ctaSubtitle")}</p>
-          <Button size="lg" asChild className="h-13 px-10 text-base rounded-full shadow-lg shadow-primary/25">
+          <Button size="lg" asChild className="h-12 px-10 text-base rounded-full shadow-lg shadow-primary/25">
             <Link href="/register">
               {t("about.ctaBtn")} <ArrowRight className="ms-2 h-4 w-4" />
             </Link>

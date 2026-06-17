@@ -38,7 +38,7 @@ export default function PublicPricing() {
       {/* ─── Hero ─── */}
       <section className="py-20 md:py-28 bg-background relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,hsl(var(--primary)/0.1),transparent)]" />
-        <div className="container max-w-3xl relative z-10 text-center space-y-5 px-4">
+        <div className="relative z-10 w-full max-w-3xl mx-auto text-center space-y-5 px-4">
           <Badge variant="secondary" className="uppercase tracking-widest text-xs px-4 py-1.5 rounded-full">
             {t("pubPricing.badge")}
           </Badge>
@@ -53,15 +53,15 @@ export default function PublicPricing() {
 
       {/* ─── Trust bar ─── */}
       <div className="border-y bg-muted/30 py-4">
-        <div className="container px-4">
+        <div className="w-full max-w-screen-xl mx-auto px-4">
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-sm text-muted-foreground">
             {[
-              { icon: ShieldCheck, label: t("pubPricing.trust1") || "Secure & Private" },
-              { icon: RefreshCw, label: t("pubPricing.trust2") || "Cancel Anytime" },
-              { icon: Zap, label: t("pubPricing.trust3") || "Instant Access" },
+              { icon: ShieldCheck, label: t("pubPricing.trust1") },
+              { icon: RefreshCw, label: t("pubPricing.trust2") },
+              { icon: Zap, label: t("pubPricing.trust3") },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-2">
-                <Icon className="h-4 w-4 text-primary" />
+                <Icon className="h-4 w-4 text-primary shrink-0" />
                 <span className="font-medium">{label}</span>
               </div>
             ))}
@@ -71,8 +71,8 @@ export default function PublicPricing() {
 
       {/* ─── Cards ─── */}
       <section className="py-20 md:py-24">
-        <div className="container px-4">
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+        <div className="w-full max-w-5xl mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-6 items-stretch">
 
             {/* Free */}
             {pricing.free.visible && (
@@ -113,7 +113,7 @@ export default function PublicPricing() {
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-400 to-orange-400" />
                 )}
                 {pricing.starter.mostPopular && (
-                  <div className="relative z-10 mx-auto -mt-0 mb-0 pt-4 pb-0">
+                  <div className="relative z-10 flex justify-center pt-4">
                     <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-300/50">
                       {t("pricing.mostPopular")}
                     </span>
@@ -138,20 +138,18 @@ export default function PublicPricing() {
                   </ul>
                 </CardContent>
                 <CardFooter className="pt-6 relative z-10">
-                  <Button
-                    className="w-full h-11 text-sm font-semibold rounded-full bg-amber-500 hover:bg-amber-600"
-                    disabled={userProfile ? isStarter : false}
-                    asChild={!(userProfile && isStarter)}
-                  >
-                    {userProfile && isStarter ? (
-                      <span>{t("dashPricing.currentPlanBtn")}</span>
-                    ) : (
+                  {userProfile && isStarter ? (
+                    <Button className="w-full h-11 text-sm font-semibold rounded-full bg-amber-500 hover:bg-amber-600" disabled>
+                      {t("dashPricing.currentPlanBtn")}
+                    </Button>
+                  ) : (
+                    <Button className="w-full h-11 text-sm font-semibold rounded-full bg-amber-500 hover:bg-amber-600" asChild>
                       <Link href={userProfile ? "/upgrade" : "/register"}>
                         {userProfile ? t("pricing.upgradeStarter") : t("pricing.getStarted")}
                         <ArrowRight className="ms-2 h-4 w-4" />
                       </Link>
-                    )}
-                  </Button>
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             )}
@@ -164,7 +162,7 @@ export default function PublicPricing() {
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary to-blue-400" />
                 )}
                 {pricing.pro.mostPopular && (
-                  <div className="relative z-10 mx-auto pt-4 pb-0">
+                  <div className="relative z-10 flex justify-center pt-4">
                     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full border border-primary/20">
                       {t("pricing.mostPopular")}
                     </span>
@@ -189,20 +187,18 @@ export default function PublicPricing() {
                   </ul>
                 </CardContent>
                 <CardFooter className="pt-6 relative z-10">
-                  <Button
-                    className="w-full h-11 text-sm font-semibold rounded-full shadow-md shadow-primary/20"
-                    disabled={userProfile ? isPro : false}
-                    asChild={!(userProfile && isPro)}
-                  >
-                    {userProfile && isPro ? (
-                      <span>{t("dashPricing.currentPlanBtn")}</span>
-                    ) : (
+                  {userProfile && isPro ? (
+                    <Button className="w-full h-11 text-sm font-semibold rounded-full shadow-md shadow-primary/20" disabled>
+                      {t("dashPricing.currentPlanBtn")}
+                    </Button>
+                  ) : (
+                    <Button className="w-full h-11 text-sm font-semibold rounded-full shadow-md shadow-primary/20" asChild>
                       <Link href={userProfile ? "/upgrade" : "/register"}>
                         {userProfile ? t("pricing.upgradePro") : t("pricing.getStarted")}
                         <ArrowRight className="ms-2 h-4 w-4" />
                       </Link>
-                    )}
-                  </Button>
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             )}
@@ -213,7 +209,7 @@ export default function PublicPricing() {
 
       {/* ─── FAQ ─── */}
       <section className="py-20 bg-muted/30">
-        <div className="container max-w-3xl px-4">
+        <div className="w-full max-w-3xl mx-auto px-4">
           <div className="text-center mb-10 space-y-2">
             <p className="text-sm font-semibold text-primary uppercase tracking-widest">FAQ</p>
             <h2 className="text-2xl font-bold">{t("pubPricing.faqTitle")}</h2>
@@ -230,8 +226,8 @@ export default function PublicPricing() {
       </section>
 
       {/* ─── CTA ─── */}
-      <section className="py-20 text-center bg-background">
-        <div className="container max-w-xl space-y-6 px-4">
+      <section className="py-20 bg-background">
+        <div className="w-full max-w-xl mx-auto text-center space-y-6 px-4">
           <h2 className="text-3xl font-bold">{t("pubPricing.ctaTitle")}</h2>
           <p className="text-muted-foreground">{t("pubPricing.ctaSubtitle")}</p>
           <Button size="lg" className="h-13 px-10 text-base rounded-full shadow-lg shadow-primary/25" asChild>
